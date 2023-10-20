@@ -1,0 +1,5 @@
+# depslib dependency file v1.0
+1697735177 source:c:\users\galik\documents\gl_projects\second\main.c
+	<windows.h>
+	<gl/gl.h>
+

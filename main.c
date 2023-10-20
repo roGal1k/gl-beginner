@@ -77,56 +77,64 @@ int WINAPI WinMain(HINSTANCE hInstance,
         {
             /* OpenGL animation code goes here */
 
-            glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+            glClearColor(0.1f, 0.6f, 0.1f, 0.0f);
             glClear(GL_COLOR_BUFFER_BIT);
 
             glPushMatrix();
-            glRotatef(theta, 0.0f, 0.0f, 1.0f);
+            //glRotatef(theta, 0.0f, 0.0f, 1.0f);
+
+            //glBegin(GL_TRIANGLES);
+
+                //glColor3f(1.0f, 0.0f, 0.0f);   glVertex2f(0.0f,   1.0f);
+                //glColor3f(0.0f, 1.0f, 0.0f);   glVertex2f(0.87f,  -0.5f);
+                //glColor3f(0.0f, 0.0f, 1.0f);   glVertex2f(-0.87f, -0.5f);
+
+            //glEnd();
+
+            glLineWidth(0.25f);
+
+            glBegin(GL_LINES);
+
+                glColor3f(0.2f, 0.8f, 1.0f); glVertex2d(-0.4f, 0.4f);
+                glColor3f(0.2f, 0.8f, 1.0f); glVertex2d(-0.4f, -0.4f);
+
+                glColor3f(0.2f, 0.8f, 1.0f); glVertex2d(-0.4f, 0.0f);
+                glColor3f(0.2f, 0.8f, 1.0f); glVertex2d(0.4f, 0.4f);
+
+                glColor3f(0.2f, 0.8f, 1.0f); glVertex2d(-0.4f, 0.0f);
+                glColor3f(0.2f, 0.8f, 1.0f); glVertex2d(0.4f, -0.4f);
+
+            glEnd();
 
             glBegin(GL_TRIANGLES);
 
-                glColor3f(1.0f, 0.0f, 0.0f);   glVertex2f(0.2f,   0.0f);
-                glColor3f(0.0f, 1.0f, 0.0f);   glVertex2f(0.2f,   0.2f);
-                glColor3f(0.0f, 0.0f, 1.0f);   glVertex2f(0.0f,   0.2f);
+                glColor3f(0.0f, 0.1f, 1.0f); glVertex2d(-1.0f, 1.0f);
+                glColor3f(0.0f, 0.1f, 1.0f); glVertex2d(-1.0f, 0.0f);
+                glColor3f(0.0f, 0.1f, 1.0f); glVertex2d(1.0f, 1.0f);
 
-                glColor3f(1.0f, 0.0f, 0.0f);   glVertex2f(-0.2f,   0.0f);
-                glColor3f(0.0f, 1.0f, 0.0f);   glVertex2f(-0.2f,   -0.2f);
-                glColor3f(0.0f, 0.0f, 1.0f);   glVertex2f(0.0f,   -0.2f);
+                glColor3f(0.0f, 0.1f, 1.0f); glVertex2d(1.0f, 1.0f);
+                glColor3f(0.0f, 0.1f, 1.0f); glVertex2d(1.0f, 0.0f);
+                glColor3f(0.0f, 0.1f, 1.0f); glVertex2d(-1.0f, 0.0f);
 
-                glColor3f(1.0f, 0.0f, 0.0f);   glVertex2f(0.4f,   0.8f);
-                glColor3f(0.0f, 1.0f, 0.0f);   glVertex2f(0.4f,   0.4f);
-                glColor3f(0.0f, 0.0f, 1.0f);   glVertex2f(0.8f,   0.4f);
+                glColor3f(0.4f, 0.4f, 0.2f); glVertex2d(-0.4f, -0.4f);
+                glColor3f(0.4f, 0.4f, 0.2f); glVertex2d(-0.4f, 0.4f);
+                glColor3f(0.4f, 0.4f, 0.2f); glVertex2d(0.4f, 0.4f);
 
-                glColor3f(1.0f, 0.0f, 0.0f);   glVertex2f(0.4f,   0.8f);
-                glColor3f(0.0f, 1.0f, 0.0f);   glVertex2f(0.8f,   0.8f);
-                glColor3f(0.0f, 0.0f, 1.0f);   glVertex2f(0.8f,   0.4f);
+                glColor3f(0.4f, 0.4f, 0.2f); glVertex2d(0.4f, 0.4f);
+                glColor3f(0.4f, 0.4f, 0.2f); glVertex2d(-0.4f, -0.4f);
+                glColor3f(0.4f, 0.4f, 0.2f); glVertex2d(0.4f, -0.4f);
 
+                glColor3f(0.4f, 0.5f, 0.2f); glVertex2d(0.4f, 0.4f);
+                glColor3f(0.4f, 0.5f, 0.2f); glVertex2d(0.0f, 0.8f);
+                glColor3f(0.4f, 0.5f, 0.2f); glVertex2d(-0.4f, 0.4f);
 
-                glColor3f(1.0f, 0.0f, 0.0f);   glVertex2f(-0.4f,   -0.8f);
-                glColor3f(0.0f, 1.0f, 0.0f);   glVertex2f(-0.4f,   -0.4f);
-                glColor3f(0.0f, 0.0f, 1.0f);   glVertex2f(-0.8f,   -0.4f);
+                glColor3f(0.0f, 0.1f, 1.0f); glVertex2d(-0.25f, 0.25f);
+                glColor3f(0.0f, 0.1f, 1.0f); glVertex2d(-0.25f, 0.0f);
+                glColor3f(0.0f, 0.1f, 1.0f); glVertex2d(1.0f, 1.0f);
 
-                glColor3f(1.0f, 0.0f, 0.0f);   glVertex2f(-0.4f,   -0.8f);
-                glColor3f(0.0f, 1.0f, 0.0f);   glVertex2f(-0.8f,   -0.8f);
-                glColor3f(0.0f, 0.0f, 1.0f);   glVertex2f(-0.8f,   -0.4f);
-
-
-                glColor3f(1.0f, 0.0f, 0.0f);   glVertex2f(0.4f,   -0.8f);
-                glColor3f(0.0f, 1.0f, 0.0f);   glVertex2f(0.4f,   -0.4f);
-                glColor3f(0.0f, 0.0f, 1.0f);   glVertex2f(0.8f,   -0.4f);
-
-                glColor3f(1.0f, 0.0f, 0.0f);   glVertex2f(0.4f,   -0.8f);
-                glColor3f(0.0f, 1.0f, 0.0f);   glVertex2f(0.8f,   -0.8f);
-                glColor3f(0.0f, 0.0f, 1.0f);   glVertex2f(0.8f,   -0.4f);
-
-                glColor3f(1.0f, 0.0f, 0.0f);   glVertex2f(-0.4f,   0.8f);
-                glColor3f(0.0f, 1.0f, 0.0f);   glVertex2f(-0.4f,   0.4f);
-                glColor3f(0.0f, 0.0f, 1.0f);   glVertex2f(-0.8f,   0.4f);
-
-                glColor3f(1.0f, 0.0f, 0.0f);   glVertex2f(-0.4f,   0.8f);
-                glColor3f(0.0f, 1.0f, 0.0f);   glVertex2f(-0.8f,   0.8f);
-                glColor3f(0.0f, 0.0f, 1.0f);   glVertex2f(-0.8f,   0.4f);
-
+                glColor3f(0.0f, 0.1f, 1.0f); glVertex2d(1.0f, 1.0f);
+                glColor3f(0.0f, 0.1f, 1.0f); glVertex2d(1.0f, 0.0f);
+                glColor3f(0.0f, 0.1f, 1.0f); glVertex2d(-1.0f, 0.0f);
             glEnd();
 
             glPopMatrix();
