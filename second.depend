@@ -3,3 +3,9 @@
 	<windows.h>
 	<gl/gl.h>
 
+1697822942 source:c:\users\galik\documents\git\gl-beginner\main.c
+	<windows.h>
+	<gl/gl.h>
+	<math.h>
+	<stdio.h>
+
