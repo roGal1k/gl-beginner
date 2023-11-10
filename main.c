@@ -87,14 +87,6 @@ void paintHouse(float  x, float y, float size){
 
 }
 
-void paintTriangle(){
-    glBegin(GL_TRIANGLES);
-        glColor3f(0.0f, 0.0f, 0.0f); glVertex2d(0.0f, 0.0f);
-        glColor3f(1.0f, 0.0f, 0.0f); glVertex2d(0.5f, 0.0f);
-        glColor3f(0.0f, 1.0f, 0.0f); glVertex2d(0.0f, 0.5f);
-    glEnd();
-}
-
 void paintTrees(){
 
     glBegin(GL_TRIANGLES);
@@ -115,8 +107,7 @@ void paintTrees(){
     glBegin(GL_TRIANGLE_FAN);
 
         r2 = 0.3;
-        glColor3f(0.0f, 1.0f, 0.0f);
-        glVertex2d(0.85, 0.35);
+        glColor3f(0.1f, 0.6f, 0.1f);
         for (int i=-1; i<cnt; i++)
         {
             float x = 0.85 + (sin(a * i) * r2);
@@ -125,8 +116,6 @@ void paintTrees(){
         }
 
         r2 = 0.12;
-        glColor3f(0.0f, 1.0f, 0.0f);
-        glVertex2d(0.65, 0.15);
         for (int i=-1; i<cnt; i++)
         {
             float x = 0.65 + (sin(a * i) * r2);
@@ -208,60 +197,62 @@ int WINAPI WinMain(HINSTANCE hInstance,
         {
             /* OpenGL animation code goes here */
 
-            glClearColor(0.0f, 1.0f, 0.0f, 0.0f);
+            glClearColor(0.0f, 0.0f, 1.0f, 0.0f);
             glClear(GL_COLOR_BUFFER_BIT);
 
-            /*
-            glLoadIdentity();
-            glScalef(0.3, 0.3, 1);
-            glRotatef(0.5,0,0,1);
 
-            for (int i=0; i<8; i++)
-            {
-                glPushMatrix();
-                glRotatef(45*i,0,0,1);
-                glTranslatef(0.5f, 0.0f, 0.0f);
-                paintTriangle();
-                glPopMatrix();
-            }
-            */
-
+            glRotatef(2.5, 0,0,1);
             glPushMatrix();
+                float cnt = 30;
+                float r2 = 0.1;
+                float a = M_PI * 2 / cnt;
 
-            glBegin(GL_TRIANGLES);
-                glColor3f(0.0f, 0.1f, 0.6f); glVertex2d(-1.0f, 1.0f);
-                glColor3f(0.0f, 0.1f, 0.6f); glVertex2d(-1.0f, 0.0f);
-                glColor3f(0.0f, 0.1f, 0.6f); glVertex2d(1.0f, 1.0f);
+                // sun
+                glBegin(GL_TRIANGLE_FAN);
 
-                glColor3f(0.0f, 0.1f, 0.6f); glVertex2d(1.0f, 1.0f);
-                glColor3f(0.0f, 0.1f, 0.6f); glVertex2d(1.0f, 0.0f);
-                glColor3f(0.0f, 0.1f, 0.6f); glVertex2d(-1.0f, 0.0f);
-            glEnd();
+                    glColor3f(1.0f, 1.0f, 0.0f);
 
-            paintHouse(-0.5, -0.4, 0.4);
-            paintHouse(0.1, -0.1, 0.4);
-            paintHouse(0.5, -0.7, 0.5);
-            paintHouse(0.1, -0.9, 0.3);
-            paintHouse(-0.9, -0.9, 0.4);
+                    for (int i=-1; i<cnt; i++)
+                    {
+                        float x = 0.7 + (sin(a * i) * r2);
+                        float y = 0.7 + (cos(a * i) * r2);
+                        glVertex2d(x,y);
+                    }
 
-            float cnt = 30;
-            float r2 = 0.1;
-            float a = M_PI * 2 / cnt;
+                glEnd();
+                glPopMatrix();
 
-            // sun
-            glBegin(GL_TRIANGLE_FAN);
+                glPushMatrix();
+                    glLoadIdentity();
+                        glBegin(GL_TRIANGLE_FAN);
+                            glColor3f(0.2f, 1.0f, 0.1f); glVertex2d(-1.0, 0);
+                            glColor3f(0.2f, 1.0f, 0.1f); glVertex2d(-1.0, -1);
+                            glColor3f(0.2f, 1.0f, 0.1f); glVertex2d(1.0, -1);
+                            glColor3f(0.2f, 1.0f, 0.1f); glVertex2d(1.0, 0);
+                        glEnd();
 
-                glColor3f(1.0f, 1.0f, 0.0f);
-                glVertex2d(0.8, 0.85);
+                        glTranslatef(-0.4, -0.6, 0);
+                        paintHouse(0, 0, 0.4);
 
-                for (int i=-1; i<cnt; i++)
-                {
-                    float x = 0.8 + (sin(a * i) * r2);
-                    float y = 0.8 + (cos(a * i) * r2);
-                    glVertex2d(x,y);
-                }
+                    glLoadIdentity();
+                        glTranslatef(0.4, -0.2, 0);
+                        glScalef(0.6,0.6,0);
+                        paintHouse(0, 0, 0.4);
 
-            glEnd();
+                    glLoadIdentity();
+                        glTranslatef(0.2, -0.9, 0);
+                        glScalef(0.7,0.7,0);
+                        paintHouse(0, 0, 0.4);
+
+                    glLoadIdentity();
+                        glTranslatef(-1.2, -0.3, 0);
+                        glScalef(0.6, 0.6, 0);
+                        paintTrees();
+
+                    glLoadIdentity();
+                        glTranslatef(0.3, -0.6, 0);
+                        glScalef(0.5, 0.5, 0);
+                        paintTrees();
 
             glPopMatrix();
 
