@@ -208,11 +208,12 @@ int WINAPI WinMain(HINSTANCE hInstance,
         {
             /* OpenGL animation code goes here */
 
-            glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+            glClearColor(0.0f, 1.0f, 0.0f, 0.0f);
             glClear(GL_COLOR_BUFFER_BIT);
 
-            //glLoadIdentity();
-            //glScalef(0.3, 0.3, 1);
+            /*
+            glLoadIdentity();
+            glScalef(0.3, 0.3, 1);
             glRotatef(0.5,0,0,1);
 
             for (int i=0; i<8; i++)
@@ -223,9 +224,8 @@ int WINAPI WinMain(HINSTANCE hInstance,
                 paintTriangle();
                 glPopMatrix();
             }
+            */
 
-
-            /*
             glPushMatrix();
 
             glBegin(GL_TRIANGLES);
@@ -237,7 +237,6 @@ int WINAPI WinMain(HINSTANCE hInstance,
                 glColor3f(0.0f, 0.1f, 0.6f); glVertex2d(1.0f, 0.0f);
                 glColor3f(0.0f, 0.1f, 0.6f); glVertex2d(-1.0f, 0.0f);
             glEnd();
-
 
             paintHouse(-0.5, -0.4, 0.4);
             paintHouse(0.1, -0.1, 0.4);
@@ -265,7 +264,6 @@ int WINAPI WinMain(HINSTANCE hInstance,
             glEnd();
 
             glPopMatrix();
-            */
 
             SwapBuffers(hDC);
 
