@@ -6,70 +6,73 @@
 #define M_PI 3.1415926535
 
 LRESULT CALLBACK WindowProc(HWND, UINT, WPARAM, LPARAM);
-void EnableOpenGL(HWND hwnd, HDC*, HGLRC*);
-void DisableOpenGL(HWND, HDC, HGLRC);
 
-POINTFLOAT *graph = NULL;
-int graphSize = 0;
-float scaleY =1;
-float curX;
+int width = 1200,
+    height = 700;
 
-void paintAxis(){
-    glLineWidth(1);
-    float d = 0.025;
-    glBegin(GL_LINES);
-        glColor3f(0,0,0);
+float koef;
 
-        glVertex2d(-1,0); glVertex2d(1,0);
-        glVertex2d(0,-1); glVertex2d(0,1);
+float const GRAVITY_BALL = 0.002;
 
-        glVertex2d(1,0); glVertex2d(1-2*d,0+d);
-        glVertex2d(1,0); glVertex2d(1-2*d,0-d);
+typedef struct{
+    float x,y;
+    float dx,dy;
+    float r;
+}TBall;
 
-        glVertex2d(0,1); glVertex2d(0+d,1-2*d);
-        glVertex2d(0,1); glVertex2d(0-d,1-2*d);
-    glEnd();
+TBall ball;
+
+void reflect(float *da, float *a, BOOL cond, float wall){
+    if (!cond) return;
+    *da *= -0.85;
+    *a = wall;
 }
 
-void graphInit(float start, float end){
-    graph = realloc(graph, sizeof(*graph) * graphSize);
-    float dx = (end-start)/(graphSize - 1);
-    for(int i=0; i<graphSize; i++)
-    {
-        graph[i].x = start;
-        graph[i].y = sin(start);
-        start += dx;
-        printf("GRAPH: %f %f\n", graph[i].x, graph[i].y);
-    }
-}
-
-void paintGraph(){
-
-    float sx = 2.0 / (graph[graphSize-1].x - graph[0].x);
-    float dx = (graph[graphSize-1].x + graph[0].x) / 2;
-
+void ballShow(TBall obj){
     glPushMatrix();
-    glScalef(sx, scaleY, 1);
-    glTranslatef(-dx,0,0);
-
-    glBegin(GL_LINE_STRIP);
-        glColor3f(1,1,1);
-        if (graphSize!=0)
-            for(int i=0; i<graphSize; i++)
-            {
-                glVertex2d(graph[i].x, graph[i].y);
-            }
-    glEnd();
-
+        glTranslatef(obj.x, obj.y, 0);
+        glScalef(obj.r, obj.r, 1);
+        paintCircle(20);
     glPopMatrix();
 }
 
-void addPoint( float x, float y)
-{
-    for(int i = 1; i< graphSize; i++)
-        graph[i-1] = graph[i];
-    graph[graphSize-1].x = x;
-    graph[graphSize-1].y = y;
+void ballMove(TBall *obj){
+    obj->x += obj->dx;
+    obj->y += obj->dy;
+
+    reflect(&obj->dy, &obj->y, (obj->y < obj->r - 1), obj->r - 1);
+    reflect(&obj->dy, &obj->y, (obj->y > 1 - obj->r), 1 - obj->r);
+
+    obj->dy -= GRAVITY_BALL;
+
+    reflect(&obj->dx, &obj->x, (obj->x < obj->r - koef), obj->r - koef);
+    reflect(&obj->dx, &obj->x, (obj->x < koef - obj->r), koef - obj->r);
+}
+
+void initBall(TBall *obj, float x, float y, float dx, float dy, float r){
+    obj->x = x;
+    obj->y = y;
+    obj->dx = dx;
+    obj->dy = dy;
+    obj->r = r;
+}
+
+void gameStart(){
+    initBall(&ball, 0, 0, 0.05, -0.01, 0.1);
+}
+
+void paintCircle(int size){
+    float x,y;
+    float da=M_PI*2.0/size;
+    glBegin(GL_TRIANGLE_FAN);
+        glVertex2f(0,0);
+        for (int i=0; i<=size; i++)
+        {
+            x = sin(da * i);
+            y = cos(da * i);
+            glVertex2f(x,y);
+        }
+    glEnd();
 }
 
 int WINAPI WinMain(HINSTANCE hInstance,
@@ -110,8 +113,8 @@ int WINAPI WinMain(HINSTANCE hInstance,
                           WS_OVERLAPPEDWINDOW,
                           CW_USEDEFAULT,
                           CW_USEDEFAULT,
-                          500,
-                          500,
+                          width,
+                          height,
                           NULL,
                           NULL,
                           hInstance,
@@ -122,11 +125,10 @@ int WINAPI WinMain(HINSTANCE hInstance,
     /* enable OpenGL for the window */
     EnableOpenGL(hwnd, &hDC, &hRC);
 
-    graphSize = 100;
-    printf("Length graph: %f\n", graph);
+    koef = (float)width/height;
+    glScalef(1/koef, 1, 1);
 
-    curX =10;
-    graphInit(-10,curX);
+    gameStart();
 
     /* program main loop */
     while (!bQuit)
@@ -151,14 +153,11 @@ int WINAPI WinMain(HINSTANCE hInstance,
             glClearColor(0.0f, 0.2f, 0.4f, 0.0f);
             glClear(GL_COLOR_BUFFER_BIT);
 
-            paintAxis();
-
-            curX +=0.1;
-            addPoint(curX, sin(curX));
-            paintGraph();
+            ballMove(&ball);
+            glColor3f(1,1,1);
+            ballShow(ball);
 
             SwapBuffers(hDC);
-
             Sleep (1);
         }
     }
@@ -178,12 +177,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
         case WM_CLOSE:
             PostQuitMessage(0);
-        break;
-
-        case WM_MOUSEWHEEL:
-            if ((int)wParam > 0) scaleY *= 1.5;
-            else scaleY *=0.7;
-            if (scaleY < 0.02) scaleY = 0.02;
         break;
 
         case WM_DESTROY:
@@ -244,4 +237,3 @@ void DisableOpenGL (HWND hwnd, HDC hDC, HGLRC hRC)
     wglDeleteContext(hRC);
     ReleaseDC(hwnd, hDC);
 }
-
