@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1700076180 source:c:\users\galik\documents\git\gl-beginner\main.c
+1700155526 source:c:\users\galik\documents\git\gl-beginner\main.c
 	<windows.h>
 	<gl/gl.h>
 	<math.h>
