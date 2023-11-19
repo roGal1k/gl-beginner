@@ -7,208 +7,149 @@
 
 LRESULT CALLBACK WindowProc(HWND, UINT, WPARAM, LPARAM);
 
-///! Parametrs screen !///
-int width = 1200,
-    height = 700;
-float koef;
+typedef struct {
+    POINTFLOAT peaks[7];
+    float colors[18];
+    GLuint indexs[6];
+    void (*initPine)();
+    void (*paintPineWithUseVertexArray)();
+    void (*paintPineWithUseIndexArray)();
+}TPine;
 
-///! Parametrs ball !///
-float const GRAVITY_BALL = 0.002;
+TPine pine;
 
-///! Parametrs players !///
-float const GRAVITY_PLAYER = 0.004;
+void initPine() {
+    pine.peaks[0].x = 0.0;
+    pine.peaks[0].y = 1;
 
-typedef struct{
-    float x,y;
-    float dx,dy;
-    float r;
-}TBall;
+    pine.peaks[1].x = 0.5;
+    pine.peaks[1].y = 0.5;
+    pine.peaks[2].x = -0.5;
+    pine.peaks[2].y = 0.5;
 
-TBall ball;
+    pine.peaks[3].x = 0;
+    pine.peaks[3].y = 0.5;
 
-TBall players[2];
-
-///! Parametrs net !///
-float netHeight = 0.75;
+    pine.peaks[4].x = -0.7;
+    pine.peaks[4].y = -0.2;
 
 
-///! Geometry paint !///
-void paintRect(float x, float y, float dx, float dy){
-    glBegin(GL_TRIANGLE_FAN);
-        glVertex2d(x,y);
-        glVertex2d(x+dx,y);
-        glVertex2d(x+dx,y+dy);
-        glVertex2d(x,y+dy);
-    glEnd();
+    pine.peaks[5].x = 0.7;
+    pine.peaks[5].y = -0.2;
+
+    pine.peaks[6].x = 0.7;
+    pine.peaks[6].y = -0.2;
+
+
+    pine.colors[0] = 1;  pine.colors[1] = 0;  pine.colors[2] = 0;
+    pine.colors[3] = 0;  pine.colors[4] = 1;  pine.colors[5] = 0;
+    pine.colors[6] = 0;  pine.colors[7] = 1;  pine.colors[8] = 0;
+    pine.colors[9] = 0;  pine.colors[10] = 0; pine.colors[11] = 1;
+    pine.colors[12] = 0; pine.colors[13] = 0; pine.colors[14] = 1;
+    pine.colors[15] = 1; pine.colors[16] = 1; pine.colors[17] = 0;
+
+    pine.indexs[0] = 0; pine.indexs[1] = 1; pine.indexs[2] = 1;
+    pine.indexs[3] = 4; pine.indexs[4] = 4; pine.indexs[5] = 5;
 }
 
-///! Ball logicks !///
-void paintCircle(int size){
-    float x,y;
-    float da=M_PI*2.0/size;
-    glBegin(GL_TRIANGLE_FAN);
-        glVertex2f(0,0);
-        for (int i=0; i<=size; i++)
-        {
-            x = sin(da * i);
-            y = cos(da * i);
-            glVertex2f(x,y);
-        }
-    glEnd();
+void paintPineWithUseVertexArray() {
+    glVertexPointer(2, GL_FLOAT, 0, pine.peaks);
+    glEnableClientState(GL_VERTEX_ARRAY);
+
+    //glColorPointer(3, GL_FLOAT, 0, pine.colors);
+    //glEnableClientState(GL_COLOR_ARRAY);
+
+    glColor3f(0,2,0);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 7);
+
+    glDisableClientState(GL_VERTEX_ARRAY);
+    //glDisableClientState(GL_COLOR_ARRAY);
 }
 
-void reflect(float *da, float *a, BOOL cond, float wall){
-    if (!cond) return;
-    *da *= -0.85;
-    *a = wall;
+void paintPineWithUseIndexArray() {
+    glVertexPointer(2, GL_FLOAT, 0, pine.peaks);
+    glEnableClientState(GL_VERTEX_ARRAY);
+
+    glColorPointer(3, GL_FLOAT, 0, pine.colors);
+    glEnableClientState(GL_COLOR_ARRAY);
+
+    glDrawElements(GL_LINES, 6, GL_UNSIGNED_INT, pine.indexs);
+
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_COLOR_ARRAY);
 }
 
-void ballShow(TBall obj){
-    glPushMatrix();
-        glTranslatef(obj.x, obj.y, 0);
-        glScalef(obj.r, obj.r, 1);
-        paintCircle(20);
-    glPopMatrix();
+void paintMainTask(){
+    POINTFLOAT rect[] = {{-1,-1},
+                     {-1,1},
+                     {1,1},
+                     {1,-1}};
+
+    float colors[] = {1,0,0,
+                    0,1,0,
+                    0,0,1,
+                    1,1,0};
+
+    GLuint index[] = {1,2,3, 3,0,1};
+
+    glVertexPointer(2, GL_FLOAT, 0, &rect);
+    glEnableClientState(GL_VERTEX_ARRAY);
+
+    glColorPointer(3,GL_FLOAT, 0, &colors);
+    glEnableClientState(GL_COLOR_ARRAY);
+
+        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+        //glDrawElements(GL_TRIANGLE_FAN, 6, GL_UNSIGNED_INT, &index);
+
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_COLOR_ARRAY);
 }
 
-BOOL isCross(float x1, float y1, float r, float x2, float y2)
-{
-    return pow(x1-x2,2)+pow(y1-y2,2) < pow(r,2);
-}
+void paintSymbolZ(){
+    POINTFLOAT symbol[] = {{-1,0.99},
+                        {1,0.99},
+                        {1,0.99},
+                        {-1,-0.99},
+                        {-1,-0.99},
+                        {1,-0.99}};
 
-void mirrorNet(TBall *obj, float x, float y)
-{
-    float objVec = atan2(obj->dx, obj->dy);
-    float crossVec = atan2(obj->x-x, obj->y-y);
+    float colors[] = {1,0,0,
+                    0,1,0,
+                    0,1,0,
+                    0,0,1,
+                    0,0,1,
+                    1,1,0};
 
-    srand(time(0));
-    if(crossVec == 0) crossVec = (rand() % 2 == 0 ? -1 : 1) * 0.023;
+    void paintSymbolZpart1(){
+        glVertexPointer(2, GL_FLOAT, 0, &symbol);
+        glEnableClientState(GL_VERTEX_ARRAY);
 
-    float resVec = M_PI - objVec + crossVec*2;
-    float speed = sqrt(pow(obj->dx,2) + pow(obj->dy,2));
+        glColorPointer(3, GL_FLOAT, 0, &colors);
+        glEnableClientState(GL_COLOR_ARRAY);
 
-    obj->dx = sin(resVec)*speed;
-    obj->dy = cos(resVec)*speed;
-}
+        glDrawArrays(GL_LINES, 0, 6);
 
-void mirrorBall(TBall *obj, float x, float y, float speed)
-{
-    float objVec = atan2(obj->dx, obj->dy);
-    float crossVec = atan2(obj->x-x, obj->y-y);
-
-    float resVec = speed == 0 ? M_PI - objVec + crossVec*2 : crossVec;
-    speed = speed == 0 ? sqrt(pow(obj->dx,2) + pow(obj->dy,2)) : speed;
-
-    obj->dx = sin(resVec)*speed;
-    obj->dy = cos(resVec)*speed;
-}
-
-void ballMove(TBall *obj){
-
-    obj->x += obj->dx;
-    obj->y += obj->dy;
-
-    reflect(&obj->dy, &obj->y, (obj->y < obj->r - 1), obj->r - 1);
-    reflect(&obj->dy, &obj->y, (obj->y > 1 - obj->r), 1 - obj->r);
-
-    obj->dy -= GRAVITY_BALL;
-
-    reflect(&obj->dx, &obj->x, (obj->x < obj->r - koef), obj->r - koef);
-    reflect(&obj->dx, &obj->x, (obj->x > koef - obj->r), koef - obj->r);
-
-    if (obj->y < -1 + netHeight){
-        if (obj->x > 0) reflect(&obj->dx, &obj->x, (obj->x < obj->r), obj->r);
-        else reflect(&obj->dx, &obj->x, (obj->x > -obj->r), -obj->r);
-    }
-    else{
-        if(isCross(obj->x, obj->y, obj->r, 0, netHeight - 1)) {
-            printf("mirrorTest");
-            mirrorNet(obj, 0, netHeight - 1);
-        }
-    }
-}
-
-void initBall(TBall *obj, float x, float y, float dx, float dy, float r){
-    obj->x = x;
-    obj->y = y;
-    obj->dx = dx;
-    obj->dy = dy;
-    obj->r = r;
-}
-
-///! Paint static object !///
-void paintBackground(){
-    glColor3f(0.83, 0.81, 0.67);
-    paintRect(-koef, -1, koef*2, 1);
-    glColor3f(0.21, 0.67, 0.88);
-    paintRect(-koef, 0, koef*2, 1);
-    glColor3f(0.66, 0.85, 1);
-    paintRect(-koef, 0.2, koef*2, 1);
-}
-
-void paintNet(){
-    glColor3f(1, (float)228/255, (float)205/255);
-    glLineWidth(6);
-    glBegin(GL_LINES);
-    glVertex2d(0, -1);
-    glVertex2d(0, -1 + netHeight);
-    glEnd();
-}
-
-///! Player settings !///
-void playerMove(TBall *obj, char left, char right, char jump, float wl1, float wl2)
-{
-    void reflectPlayer(float *da, float *a, BOOL cond, float wall){
-        if (!cond) return;
-        *da *= 0.85;
-        *a = wall;
+        glDisableClientState(GL_VERTEX_ARRAY);
+        glDisableClientState(GL_COLOR_ARRAY);
     }
 
-    static float speed = 0.05;
+    void paintSymbolZpart2(){
+        GLuint indexZ[] = {0,1, 1,4, 4,5};
 
-    reflectPlayer(&obj->dy, &obj->y, (obj->y < obj->r - 1), obj->r - 1);
-    reflectPlayer(&obj->dy, &obj->y, (obj->y > 1 - obj->r), 1 - obj->r);
+        glVertexPointer(2, GL_FLOAT, 0, &symbol);
+        glEnableClientState(GL_VERTEX_ARRAY);
 
-    if(GetKeyState(left)<0) obj->x -= speed;
-        else if (GetKeyState(right)<0) obj->x += speed;
+        glColorPointer(3, GL_FLOAT, 0, &colors);
+        glEnableClientState(GL_COLOR_ARRAY);
 
-    if(obj->x - obj->r < wl1) obj->x = wl1 + obj->r;
-    if(obj->x + obj->r > wl2) obj->x = wl2 - obj->r;
+        glDrawElements(GL_LINES, 6, GL_UNSIGNED_INT, &indexZ);
 
-    if(GetKeyState(jump) < 0 && (obj -> y < -0.99 + obj->r))
-    {
-        obj->dy = speed * 1.4;
+        glDisableClientState(GL_VERTEX_ARRAY);
+        glDisableClientState(GL_COLOR_ARRAY);
     }
-    obj->y += obj->dy;
-    obj->dy -= GRAVITY_PLAYER;
-    if(obj->y - obj->r <-1)
-    {
-        obj->y = -1 + obj->r;
-        obj->dy = 0;
-    }
-    if (isCross(obj->x, obj->y, obj->r+ ball.r, ball.x, ball.y))
-    {
-        mirrorBall(&ball, obj->x, obj->y, 0.07);
-        ball.dy += 0.01;
-    }
-}
 
-///! Game settings !///
-void gameStart(){
-    initBall(&ball, 0, 1, 0, 0, 0.15);
-    initBall(&players[0], 0.5, 0.1, 0, 0, 0.2);
-    initBall(&players[1], -0.5, 0.1, 0, 0, 0.2);
-}
-
-void gameShow(){
-    paintBackground();
-    paintNet();
-    glColor3f(0.23,0.29,0.79);
-    ballShow(ball);
-    glColor3f(0.8,0.1,0.1);
-    ballShow(players[0]);
-    glColor3f(0.1,0.8,0.1);
-    ballShow(players[1]);
+    glLineWidth(4);
+    paintSymbolZpart2();
 }
 
 int WINAPI WinMain(HINSTANCE hInstance,
@@ -249,8 +190,8 @@ int WINAPI WinMain(HINSTANCE hInstance,
                           WS_OVERLAPPEDWINDOW,
                           CW_USEDEFAULT,
                           CW_USEDEFAULT,
-                          width,
-                          height,
+                          500,
+                          500,
                           NULL,
                           NULL,
                           hInstance,
@@ -260,11 +201,6 @@ int WINAPI WinMain(HINSTANCE hInstance,
 
     /* enable OpenGL for the window */
     EnableOpenGL(hwnd, &hDC, &hRC);
-
-    koef = (float)width / height;
-    glScalef(1/koef, 1, 1);
-
-    gameStart();
 
     /* program main loop */
     while (!bQuit)
@@ -289,11 +225,13 @@ int WINAPI WinMain(HINSTANCE hInstance,
             glClearColor(0.0f, 0.2f, 0.4f, 0.0f);
             glClear(GL_COLOR_BUFFER_BIT);
 
-            ballMove(&ball);
-            playerMove(&players[0], 'A', 'D', 'W', 0, koef);
-            playerMove(&players[1], VK_LEFT, VK_RIGHT, VK_UP, -koef, 0);
+            pine.initPine = &initPine;
+            pine.paintPineWithUseVertexArray = &paintPineWithUseVertexArray;
 
-            gameShow();
+            pine.initPine();
+            pine.paintPineWithUseVertexArray();
+
+
 
             SwapBuffers(hDC);
             Sleep (1);
