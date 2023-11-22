@@ -5,152 +5,18 @@
 
 #define M_PI 3.1415926535
 
+float vertexs[] ={1,1,0,
+                -1,0,0,
+                1,-1,0};
+
+
+float vertexs2[] ={0,1,1,
+                   0,-1,0,
+                   -1,1,0};
+
+
+
 LRESULT CALLBACK WindowProc(HWND, UINT, WPARAM, LPARAM);
-
-typedef struct {
-    POINTFLOAT peaks[7];
-    float colors[18];
-    GLuint indexs[6];
-    void (*initPine)();
-    void (*paintPineWithUseVertexArray)();
-    void (*paintPineWithUseIndexArray)();
-}TPine;
-
-TPine pine;
-
-void initPine() {
-    pine.peaks[0].x = 0.0;
-    pine.peaks[0].y = 1;
-
-    pine.peaks[1].x = 0.5;
-    pine.peaks[1].y = 0.5;
-    pine.peaks[2].x = -0.5;
-    pine.peaks[2].y = 0.5;
-
-    pine.peaks[3].x = 0;
-    pine.peaks[3].y = 0.5;
-
-    pine.peaks[4].x = -0.7;
-    pine.peaks[4].y = -0.2;
-
-
-    pine.peaks[5].x = 0.7;
-    pine.peaks[5].y = -0.2;
-
-    pine.peaks[6].x = 0.7;
-    pine.peaks[6].y = -0.2;
-
-
-    pine.colors[0] = 1;  pine.colors[1] = 0;  pine.colors[2] = 0;
-    pine.colors[3] = 0;  pine.colors[4] = 1;  pine.colors[5] = 0;
-    pine.colors[6] = 0;  pine.colors[7] = 1;  pine.colors[8] = 0;
-    pine.colors[9] = 0;  pine.colors[10] = 0; pine.colors[11] = 1;
-    pine.colors[12] = 0; pine.colors[13] = 0; pine.colors[14] = 1;
-    pine.colors[15] = 1; pine.colors[16] = 1; pine.colors[17] = 0;
-
-    pine.indexs[0] = 0; pine.indexs[1] = 1; pine.indexs[2] = 1;
-    pine.indexs[3] = 4; pine.indexs[4] = 4; pine.indexs[5] = 5;
-}
-
-void paintPineWithUseVertexArray() {
-    glVertexPointer(2, GL_FLOAT, 0, pine.peaks);
-    glEnableClientState(GL_VERTEX_ARRAY);
-
-    //glColorPointer(3, GL_FLOAT, 0, pine.colors);
-    //glEnableClientState(GL_COLOR_ARRAY);
-
-    glColor3f(0,2,0);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 7);
-
-    glDisableClientState(GL_VERTEX_ARRAY);
-    //glDisableClientState(GL_COLOR_ARRAY);
-}
-
-void paintPineWithUseIndexArray() {
-    glVertexPointer(2, GL_FLOAT, 0, pine.peaks);
-    glEnableClientState(GL_VERTEX_ARRAY);
-
-    glColorPointer(3, GL_FLOAT, 0, pine.colors);
-    glEnableClientState(GL_COLOR_ARRAY);
-
-    glDrawElements(GL_LINES, 6, GL_UNSIGNED_INT, pine.indexs);
-
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_COLOR_ARRAY);
-}
-
-void paintMainTask(){
-    POINTFLOAT rect[] = {{-1,-1},
-                     {-1,1},
-                     {1,1},
-                     {1,-1}};
-
-    float colors[] = {1,0,0,
-                    0,1,0,
-                    0,0,1,
-                    1,1,0};
-
-    GLuint index[] = {1,2,3, 3,0,1};
-
-    glVertexPointer(2, GL_FLOAT, 0, &rect);
-    glEnableClientState(GL_VERTEX_ARRAY);
-
-    glColorPointer(3,GL_FLOAT, 0, &colors);
-    glEnableClientState(GL_COLOR_ARRAY);
-
-        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-        //glDrawElements(GL_TRIANGLE_FAN, 6, GL_UNSIGNED_INT, &index);
-
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_COLOR_ARRAY);
-}
-
-void paintSymbolZ(){
-    POINTFLOAT symbol[] = {{-1,0.99},
-                        {1,0.99},
-                        {1,0.99},
-                        {-1,-0.99},
-                        {-1,-0.99},
-                        {1,-0.99}};
-
-    float colors[] = {1,0,0,
-                    0,1,0,
-                    0,1,0,
-                    0,0,1,
-                    0,0,1,
-                    1,1,0};
-
-    void paintSymbolZpart1(){
-        glVertexPointer(2, GL_FLOAT, 0, &symbol);
-        glEnableClientState(GL_VERTEX_ARRAY);
-
-        glColorPointer(3, GL_FLOAT, 0, &colors);
-        glEnableClientState(GL_COLOR_ARRAY);
-
-        glDrawArrays(GL_LINES, 0, 6);
-
-        glDisableClientState(GL_VERTEX_ARRAY);
-        glDisableClientState(GL_COLOR_ARRAY);
-    }
-
-    void paintSymbolZpart2(){
-        GLuint indexZ[] = {0,1, 1,4, 4,5};
-
-        glVertexPointer(2, GL_FLOAT, 0, &symbol);
-        glEnableClientState(GL_VERTEX_ARRAY);
-
-        glColorPointer(3, GL_FLOAT, 0, &colors);
-        glEnableClientState(GL_COLOR_ARRAY);
-
-        glDrawElements(GL_LINES, 6, GL_UNSIGNED_INT, &indexZ);
-
-        glDisableClientState(GL_VERTEX_ARRAY);
-        glDisableClientState(GL_COLOR_ARRAY);
-    }
-
-    glLineWidth(4);
-    paintSymbolZpart2();
-}
 
 int WINAPI WinMain(HINSTANCE hInstance,
                    HINSTANCE hPrevInstance,
@@ -202,6 +68,12 @@ int WINAPI WinMain(HINSTANCE hInstance,
     /* enable OpenGL for the window */
     EnableOpenGL(hwnd, &hDC, &hRC);
 
+    glEnable(GL_DEPTH_TEST);
+
+    glLoadIdentity();
+    //glOrtho(-2,2, -2,2, -1,1);
+    glFrustum(-1,1, -1,1, 2,100);
+
     /* program main loop */
     while (!bQuit)
     {
@@ -223,15 +95,23 @@ int WINAPI WinMain(HINSTANCE hInstance,
         {
             /* OpenGL animation code goes here */
             glClearColor(0.0f, 0.2f, 0.4f, 0.0f);
-            glClear(GL_COLOR_BUFFER_BIT);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            pine.initPine = &initPine;
-            pine.paintPineWithUseVertexArray = &paintPineWithUseVertexArray;
+            glTranslatef(0,0,-0.1);
 
-            pine.initPine();
-            pine.paintPineWithUseVertexArray();
+            glVertexPointer(3, GL_FLOAT, 0, &vertexs);
+            glEnableClientState(GL_VERTEX_ARRAY);
+                glColor3f(0,1,0);
+                glDrawArrays(GL_TRIANGLES, 0, 3);
 
+            glPushMatrix();
+            glTranslatef(0,0,-10);
+                glVertexPointer(3, GL_FLOAT, 0, &vertexs2);
+                    glColor3f(1,0,0);
+                    glDrawArrays(GL_TRIANGLES, 0, 3);
+            glPopMatrix();
 
+            glDisableClientState(GL_VERTEX_ARRAY);
 
             SwapBuffers(hDC);
             Sleep (1);
