@@ -5,139 +5,42 @@
 
 #define M_PI 3.1415926535
 
-float vertexRectangle[] = {1,1,0,
-                        1,-1,0,
-                       -1,-1,0,
-                       -1,1,0};
-
-float vertexPyramid[] = {0,0,2,
-                         1,1,0,
-                         1,-1,0,
-                        -1,-1,0,
-                        -1,1,0,
-                         1,1,0};
-
-POINTFLOAT posPlayer = {0,0};
-
-float xAlpha = 20;
-float yAlpha = 0;
-
-void ShowWorld()
-{
-    glEnableClientState(GL_VERTEX_ARRAY);
-        glVertexPointer(3, GL_FLOAT,0, &vertexRectangle);
-        for (int i=0; i<20; i++)
-        {
-            for (int j=0; j<20; j++)
-            {
-                glPushMatrix();
-                    if((i+j)%2 == 0) glColor3f(0,0.5,0);
-                    else glColor3f(0.9,0.9,0.9);
-                    glTranslatef(i*2, j*2, 0);
-                    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-                glPopMatrix();
-            }
-        }
-    glDisableClientState(GL_VERTEX_ARRAY);
-
-}
-
-void PaintCube(){
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glVertexPointer(3, GL_FLOAT,0, &vertexRectangle);
-    glTranslatef(10, 10, 0.001);
-
-    //bottom
-    glPushMatrix();
-        glColor3f(0.2,0.2,0.2);
-        glTranslatef(0, 0, 0);
-        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-    glPopMatrix();
-
-    //top
-    glPushMatrix();
-        glColor3f(0.2,0.2,0.2);
-        glTranslatef(0, 0, 2);
-        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-    glPopMatrix();
-
-    //back gorizontal
-    glPushMatrix();
-        glColor3f(0.2,0.2,0.2);
-        glTranslatef(0, 1, 1);
-        glRotatef(90,1,0,0);
-        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-    glPopMatrix();
-
-    //front gorizontal
-    glPushMatrix();
-        glColor3f(0.2,0.2,0.2);
-        glTranslatef(0, -1, 1);
-        glRotatef(90,1,0,0);
-        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-    glPopMatrix();
-
-    //left
-    glPushMatrix();
-        glColor3f(0.2,0.2,0.2);
-        glTranslatef(1, 0, 1);
-        glRotatef(90,1,0,0);
-        glRotatef(90,0,1,0);
-        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-    glPopMatrix();
-
-    //right
-    glPushMatrix();
-        glColor3f(0.2,0.2,0.2);
-        glTranslatef(-1, 0, 1);
-        glRotatef(90,1,0,0);
-        glRotatef(90,0,1,0);
-        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-    glPopMatrix();
-}
-
-void PaintPyramid(){
-
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glVertexPointer(3, GL_FLOAT,0, &vertexPyramid);
-    glTranslatef(-5, 25, 0.001);
-
-    //bottom
-    glPushMatrix();
-        glColor3f(0.5,0.4,0.1);
-        glTranslatef(0, 0, 0);
-        glDrawArrays(GL_TRIANGLE_FAN, 0, 6);
-    glPopMatrix();
-}
-
-void MoveCamera(){
-    if(GetKeyState(VK_UP) <0) xAlpha =++xAlpha > 180 ? 180 : xAlpha;
-    if(GetKeyState(VK_DOWN) <0) xAlpha =--xAlpha <0 ? 0 : xAlpha;
-
-    BOOL cam=FALSE;
-    if(GetKeyState(VK_LEFT) <0) yAlpha++;
-    if(GetKeyState(VK_RIGHT) <0) yAlpha--;
-
-    float angle = -yAlpha /180 * M_PI;
-    float speed = 0;
-
-    if(GetKeyState('W') <0) speed = 0.1;
-    if(GetKeyState('S') <0) speed = -0.1;
-    if(GetKeyState('D') <0) {speed = -0.1; angle -= M_PI*0.5;};
-    if(GetKeyState('A') <0) {speed = -0.1; angle += M_PI*0.5;};
-
-    if(speed!=0)
-    {
-        posPlayer.x += sin(angle) * speed;
-        posPlayer.y += cos(angle) * speed;
-    }
-
-    glRotatef(-xAlpha,1,0,0);
-    glRotatef(-yAlpha,0,0,1);
-    glTranslatef(-posPlayer.x, -posPlayer.y,-3);
-}
+int width, height;
 
 LRESULT CALLBACK WindowProc(HWND, UINT, WPARAM, LPARAM);
+
+typedef struct {
+    char name[20];
+    float vert[8];
+    BOOL hover;
+}TButton;
+
+TButton btns[] = {{"start", {10,10,110,10,110,40,10,40}, FALSE},
+                  {"settings", {10,50,110,50,110,80,10,80}}, FALSE};
+
+int buttonCount = sizeof(btns)/sizeof(btns[0]);
+
+void TButtonShow(TButton btn){
+    glEnableClientState(GL_VERTEX_ARRAY);
+        if (btn.hover) glColor3f(0,1,1);
+        else glColor3f(1,1,0);
+        glVertexPointer(2, GL_FLOAT, 0, btn.vert);
+        glDrawArrays(GL_TRIANGLE_FAN, 0,4);
+    glDisableClientState(GL_VERTEX_ARRAY);
+}
+
+void showMenu(){
+    glPushMatrix();
+        glLoadIdentity();
+        glOrtho(0, width, height, 0, -1, 1);
+        int i=0;
+        while(i<buttonCount){TButtonShow(btns[i]);i++;};
+    glPopMatrix();
+};
+
+BOOL PointInButton(int xMouse, int yMouse, TButton btn){
+    return(((xMouse>btn.vert[0]) && (xMouse<btn.vert[2])) && ((yMouse>btn.vert[1]) && (yMouse<btn.vert[7])));
+}
 
 int WINAPI WinMain(HINSTANCE hInstance,
                    HINSTANCE hPrevInstance,
@@ -177,8 +80,8 @@ int WINAPI WinMain(HINSTANCE hInstance,
                           WS_OVERLAPPEDWINDOW,
                           CW_USEDEFAULT,
                           CW_USEDEFAULT,
-                          1000,
-                          1000,
+                          800,
+                          600,
                           NULL,
                           NULL,
                           hInstance,
@@ -217,12 +120,7 @@ int WINAPI WinMain(HINSTANCE hInstance,
             glClearColor(0.0f, 0.2f, 0.4f, 0.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            glPushMatrix();
-                MoveCamera();
-                ShowWorld();
-                PaintCube();
-                PaintPyramid();
-            glPopMatrix();
+            showMenu();
 
             SwapBuffers(hDC);
             Sleep (1);
@@ -248,6 +146,33 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         case WM_DESTROY:
             return 0;
+
+        case WM_LBUTTONDOWN:{
+            int i=0; while(i<buttonCount){
+            if (PointInButton(LOWORD(lParam), HIWORD(lParam), btns[i])){printf("Click on button: %s\n", btns[i].name);}; i++;};
+        }
+        break;
+
+        case WM_LBUTTONUP:
+            showMenu();
+        break;
+
+        case WM_MOUSEMOVE:
+        {
+            for (int i=0; i<buttonCount; i++){
+                btns[i].hover= PointInButton(LOWORD(lParam), HIWORD(lParam), btns[i]);
+            }
+        }
+        break;
+
+        case WM_SIZE:
+            width = LOWORD(lParam);
+            height = HIWORD(lParam);
+            glViewport(0, 0, width, height);
+            glLoadIdentity();
+            float screenRatio = width/ (float)height;
+            glOrtho(-screenRatio, screenRatio, -1,1, -1,1);
+        break;
 
         case WM_KEYDOWN:
         {
