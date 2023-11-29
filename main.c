@@ -5,14 +5,17 @@
 
 #define M_PI 3.1415926535
 
-float vertexBottom[] = {1,1,0,
+float vertexRectangle[] = {1,1,0,
                         1,-1,0,
                        -1,-1,0,
                        -1,1,0};
 
-float vertexTriangle[] = {0,1,0,
-                         -1,-1,0,
-                          1,-1,0};
+float vertexPyramid[] = {0,0,2,
+                         1,1,0,
+                         1,-1,0,
+                        -1,-1,0,
+                        -1,1,0,
+                         1,1,0};
 
 POINTFLOAT posPlayer = {0,0};
 
@@ -22,7 +25,7 @@ float yAlpha = 0;
 void ShowWorld()
 {
     glEnableClientState(GL_VERTEX_ARRAY);
-        glVertexPointer(3, GL_FLOAT,0, &vertexBottom);
+        glVertexPointer(3, GL_FLOAT,0, &vertexRectangle);
         for (int i=0; i<20; i++)
         {
             for (int j=0; j<20; j++)
@@ -41,7 +44,7 @@ void ShowWorld()
 
 void PaintCube(){
     glEnableClientState(GL_VERTEX_ARRAY);
-    glVertexPointer(3, GL_FLOAT,0, &vertexBottom);
+    glVertexPointer(3, GL_FLOAT,0, &vertexRectangle);
     glTranslatef(10, 10, 0.001);
 
     //bottom
@@ -96,53 +99,15 @@ void PaintCube(){
 void PaintPyramid(){
 
     glEnableClientState(GL_VERTEX_ARRAY);
-    glVertexPointer(3, GL_FLOAT,0, &vertexBottom);
-    glTranslatef(-5, -5, 0.001);
+    glVertexPointer(3, GL_FLOAT,0, &vertexPyramid);
+    glTranslatef(-5, 25, 0.001);
 
     //bottom
     glPushMatrix();
-        glColor3f(0.2,0.2,0.2);
+        glColor3f(0.5,0.4,0.1);
         glTranslatef(0, 0, 0);
-        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+        glDrawArrays(GL_TRIANGLE_FAN, 0, 6);
     glPopMatrix();
-
-    glVertexPointer(3, GL_FLOAT,0, &vertexTriangle);
-
-    //back gorizontal
-    glPushMatrix();
-        glColor3f(0.2,0.2,0.2);
-        glRotatef(180,1,0,0);
-        glTranslatef(0, 0.5, 1);
-        glRotatef(60,1,0,0);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-        glPopMatrix();
-
-    //front gorizontal
-    glPushMatrix();
-        glColor3f(0.2,0.2,0.2);
-        glTranslatef(0, -1+sqrt(3)/2, 1);
-        glRotatef(60,1,0,0);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-    glPopMatrix();
-
-    //left
-    glPushMatrix();
-        glColor3f(0.2,0.2,0.2);
-        glTranslatef(1, 0, 1);
-        glRotatef(90,1,0,0);
-        glRotatef(90,0,1,0);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-    glPopMatrix();
-
-    //right
-    glPushMatrix();
-        glColor3f(0.2,0.2,0.2);
-        glTranslatef(-1, 0, 1);
-        glRotatef(90,1,0,0);
-        glRotatef(90,0,1,0);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-    glPopMatrix();
-
 }
 
 void MoveCamera(){
