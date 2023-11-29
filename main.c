@@ -5,42 +5,136 @@
 
 #define M_PI 3.1415926535
 
+//screen size
 int width, height;
+
+HWND hwnd;
 
 LRESULT CALLBACK WindowProc(HWND, UINT, WPARAM, LPARAM);
 
+struct {
+    int vertex[24];
+    int index[39];
+}cube ={{   0,0,0,
+            0,1,0,
+            1,1,0,
+            1,0,0,
+            0,0,1,
+            0,1,1,
+            1,1,1,
+            1,0,1},
+        {   0,1,2,
+            2,3,0,
+            4,5,6,
+            6,7,4,
+            3,2,5,
+            6,7,4,
+            3,2,5,
+            6,7,3,
+            0,1,5,
+            5,4,0,
+            1,2,6,
+            6,5,1,
+            0,3,7,
+            7,4,0}};
+
 typedef struct {
-    char name[20];
-    float vert[8];
-    BOOL hover;
-}TButton;
+    float r,g,b;
+}TColor;
 
-TButton btns[] = {{"start", {10,10,110,10,110,40,10,40}, FALSE},
-                  {"settings", {10,50,110,50,110,80,10,80}}, FALSE};
+typedef struct {
+    TColor clr;
+}TCell;
 
-int buttonCount = sizeof(btns)/sizeof(btns[0]);
+struct {
+    float x,y,z;
+    float xRot,zRot;
+}camera = {0, 0, 1.7, 70, -40};
 
-void TButtonShow(TButton btn){
-    glEnableClientState(GL_VERTEX_ARRAY);
-        if (btn.hover) glColor3f(0,1,1);
-        else glColor3f(1,1,0);
-        glVertexPointer(2, GL_FLOAT, 0, btn.vert);
-        glDrawArrays(GL_TRIANGLE_FAN, 0,4);
+void applyCamera(){
+    glRotatef(-camera.xRot, 1, 0, 0);
+    glRotatef(-camera.zRot, 0, 0, 1);
+    glTranslatef(-camera.x, -camera.y, -camera.z);
+}
+
+void gameMove()
+{
+    playerMove();
+}
+
+void cameraRotation(float xAngle, float zAngle){
+    camera.zRot += zAngle;
+    if (camera.zRot < 0) camera.zRot += 360;
+    if (camera.zRot >360) camera.zRot -= 360;
+    camera.xRot += xAngle;
+    if (camera.xRot < 0) camera.zRot = 0;
+    if (camera.xRot > 180) camera.zRot = 180;
+}
+
+void playerMove(){
+    if (GetForegroundWindow() != hwnd) return;
+
+    POINT mouseCur;
+    static POINT base= {400, 300};
+    GetCursorPos(&mouseCur);
+    cameraRotation((base.y - mouseCur.y)/5.0, (base.x - mouseCur.x)/5.0);
+    SetCursorPos(base.x, base.y);
+}
+
+// map size
+#define pW 40
+#define pH 40
+TCell map[pW][pH];
+
+void initMap(){
+    for (int i=0; i<pW; i++){
+        for (int j=0; j<pH; j++)
+        {
+            float dc = (rand() %20) *0.1;
+            map[i][j].clr.r = 0.31 + dc;
+            map[i][j].clr.g = 0.5 + dc;
+            map[i][j].clr.b = 0.13 + dc;
+        }
+    }
+}
+
+void WindResize(int x, int y);
+void initGame(){
+    glEnable(GL_DEPTH_TEST);
+    initMap();
+     RECT rct;
+    GetClientRect(hwnd, &rct);
+    WindResize(rct.right, rct.bottom);
+}
+
+void gameShow(){
+    glClearColor(0.6, 0.8, 1, 0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glPushMatrix();
+        applyCamera();
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glVertexPointer(3,GL_FLOAT, 0, cube.vertex);
+        for (int i=0; i<pW; i++){
+            for (int j=0; j<pH; j++){
+                glPushMatrix();
+                    glTranslatef(i,j,0);
+                    glColor3f(map[i][j].clr.r, map[i][j].clr.g, map[i][j].clr.b);
+                    glDrawElements(GL_TRIANGLES,6, GL_UNSIGNED_INT, cube.index);
+                glPopMatrix();
+            }
+        }
+    glPopMatrix();
     glDisableClientState(GL_VERTEX_ARRAY);
 }
 
-void showMenu(){
-    glPushMatrix();
-        glLoadIdentity();
-        glOrtho(0, width, height, 0, -1, 1);
-        int i=0;
-        while(i<buttonCount){TButtonShow(btns[i]);i++;};
-    glPopMatrix();
+void WindResize(int x, int y){
+    glViewport(0, 0, x, y);
+    float k = x / (float)y;
+    float sz = 0.1;
+    glLoadIdentity();
+    glFrustum(-k*sz, k*sz, -sz, sz, sz*2, 100);
 };
-
-BOOL PointInButton(int xMouse, int yMouse, TButton btn){
-    return(((xMouse>btn.vert[0]) && (xMouse<btn.vert[2])) && ((yMouse>btn.vert[1]) && (yMouse<btn.vert[7])));
-}
 
 int WINAPI WinMain(HINSTANCE hInstance,
                    HINSTANCE hPrevInstance,
@@ -48,7 +142,6 @@ int WINAPI WinMain(HINSTANCE hInstance,
                    int nCmdShow)
 {
     WNDCLASSEX wcex;
-    HWND hwnd;
     HDC hDC;
     HGLRC hRC;
     MSG msg;
@@ -92,10 +185,7 @@ int WINAPI WinMain(HINSTANCE hInstance,
     /* enable OpenGL for the window */
     EnableOpenGL(hwnd, &hDC, &hRC);
 
-    glEnable(GL_DEPTH_TEST);
-
-    glLoadIdentity();
-    glFrustum(-1,1, -1,1, 2,100);
+    initGame();
 
     /* program main loop */
     while (!bQuit)
@@ -117,11 +207,8 @@ int WINAPI WinMain(HINSTANCE hInstance,
         else
         {
             /* OpenGL animation code goes here */
-            glClearColor(0.0f, 0.2f, 0.4f, 0.0f);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-            showMenu();
-
+                gameMove();
+                gameShow();
             SwapBuffers(hDC);
             Sleep (1);
         }
@@ -146,24 +233,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         case WM_DESTROY:
             return 0;
-
-        case WM_LBUTTONDOWN:{
-            int i=0; while(i<buttonCount){
-            if (PointInButton(LOWORD(lParam), HIWORD(lParam), btns[i])){printf("Click on button: %s\n", btns[i].name);}; i++;};
-        }
-        break;
-
-        case WM_LBUTTONUP:
-            showMenu();
-        break;
-
-        case WM_MOUSEMOVE:
-        {
-            for (int i=0; i<buttonCount; i++){
-                btns[i].hover= PointInButton(LOWORD(lParam), HIWORD(lParam), btns[i]);
-            }
-        }
-        break;
 
         case WM_SIZE:
             width = LOWORD(lParam);
