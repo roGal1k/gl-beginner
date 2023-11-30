@@ -11,10 +11,12 @@ int width, height;
 HWND hwnd;
 
 LRESULT CALLBACK WindowProc(HWND, UINT, WPARAM, LPARAM);
+void EnableOpenGL(HWND hwnd, HDC*, HGLRC*);
+void DisableOpenGL(HWND, HDC, HGLRC);
 
 struct {
     int vertex[24];
-    int index[39];
+    int index[36];
 }cube ={{   0,0,0,
             0,1,0,
             1,1,0,
@@ -26,8 +28,6 @@ struct {
         {   0,1,2,
             2,3,0,
             4,5,6,
-            6,7,4,
-            3,2,5,
             6,7,4,
             3,2,5,
             6,7,3,
@@ -102,7 +102,8 @@ void WindResize(int x, int y);
 void initGame(){
     glEnable(GL_DEPTH_TEST);
     initMap();
-     RECT rct;
+
+    RECT rct;
     GetClientRect(hwnd, &rct);
     WindResize(rct.right, rct.bottom);
 }
@@ -207,8 +208,8 @@ int WINAPI WinMain(HINSTANCE hInstance,
         else
         {
             /* OpenGL animation code goes here */
-                gameMove();
-                gameShow();
+            gameMove();
+            gameShow();
             SwapBuffers(hDC);
             Sleep (1);
         }
@@ -240,7 +241,11 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             glViewport(0, 0, width, height);
             glLoadIdentity();
             float screenRatio = width/ (float)height;
-            glOrtho(-screenRatio, screenRatio, -1,1, -1,1);
+            glFrustum(-screenRatio, screenRatio, -1,1, -1,1);
+        break;
+
+        case WM_SETCURSOR:
+            ShowCursor(FALSE);
         break;
 
         case WM_KEYDOWN:
