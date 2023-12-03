@@ -8,6 +8,8 @@
 //screen size
 int width, height;
 
+BOOL ShowMask = FALSE;
+
 HWND hwnd;
 
 LRESULT CALLBACK WindowProc(HWND, UINT, WPARAM, LPARAM);
@@ -15,28 +17,12 @@ void EnableOpenGL(HWND hwnd, HDC*, HGLRC*);
 void DisableOpenGL(HWND, HDC, HGLRC);
 
 struct {
-    int vertex[24];
-    int index[36];
-}cube ={{   0,0,0,
-            0,1,0,
-            1,1,0,
-            1,0,0,
-            0,0,1,
-            0,1,1,
-            1,1,1,
-            1,0,1},
-        {   0,1,2,
-            2,3,0,
-            4,5,6,
-            6,7,4,
-            3,2,5,
-            6,7,3,
-            0,1,5,
-            5,4,0,
-            1,2,6,
-            6,5,1,
-            0,3,7,
-            7,4,0}};
+    float vertex[24];
+    GLuint index[36];
+}cube ={
+    {0,0,0, 0,1,0, 1,1,0, 1,0,0, 0,0,1, 0,1,1, 1,1,1, 1,0,1},
+    {0,1,2, 2,3,0, 4,5,6, 6,7,4, 3,2,5, 6,7,3, 0,1,5, 5,4,0, 1,2,6, 6,5,1, 0,3,7, 7,4,0}
+};
 
 typedef struct {
     float r,g,b;
@@ -57,6 +43,8 @@ void applyCamera(){
     glTranslatef(-camera.x, -camera.y, -camera.z);
 }
 
+//!-----------------------------------------------------CAMERA
+
 void gameMove()
 {
     playerMove();
@@ -74,12 +62,28 @@ void cameraRotation(float xAngle, float zAngle){
 void playerMove(){
     if (GetForegroundWindow() != hwnd) return;
 
+    float angle = -camera.zRot /180 * M_PI;
+    float speed = 0;
+
+    if(GetKeyState('W') <0) speed = 0.1;
+    if(GetKeyState('S') <0) speed = -0.1;
+    if(GetKeyState('D') <0) {speed = -0.1; angle -= M_PI*0.5;};
+    if(GetKeyState('A') <0) {speed = -0.1; angle += M_PI*0.5;};
+
+    if(speed!=0)
+    {
+        camera.x += sin(angle) * speed;
+        camera.y += cos(angle) * speed;
+    }
+
     POINT mouseCur;
     static POINT base= {400, 300};
     GetCursorPos(&mouseCur);
     cameraRotation((base.y - mouseCur.y)/5.0, (base.x - mouseCur.x)/5.0);
     SetCursorPos(base.x, base.y);
 }
+
+//!-----------------------------------------------------------------GAME
 
 // map size
 #define pW 40
@@ -90,7 +94,7 @@ void initMap(){
     for (int i=0; i<pW; i++){
         for (int j=0; j<pH; j++)
         {
-            float dc = (rand() %20) *0.1;
+            float dc = (rand() %2) *0.1;
             map[i][j].clr.r = 0.31 + dc;
             map[i][j].clr.g = 0.5 + dc;
             map[i][j].clr.b = 0.13 + dc;
@@ -99,34 +103,40 @@ void initMap(){
 }
 
 void WindResize(int x, int y);
+
 void initGame(){
     glEnable(GL_DEPTH_TEST);
     initMap();
-
+    initEnemys();
     RECT rct;
     GetClientRect(hwnd, &rct);
     WindResize(rct.right, rct.bottom);
 }
 
 void gameShow(){
-    glClearColor(0.6, 0.8, 1, 0);
+    if(ShowMask) glClearColor(0,0,0,0);
+    else glClearColor(0.6, 0.8, 1, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glPushMatrix();
         applyCamera();
         glEnableClientState(GL_VERTEX_ARRAY);
-        glVertexPointer(3,GL_FLOAT, 0, cube.vertex);
+        glVertexPointer(3, GL_FLOAT, 0, cube.vertex);
         for (int i=0; i<pW; i++){
             for (int j=0; j<pH; j++){
                 glPushMatrix();
                     glTranslatef(i,j,0);
-                    glColor3f(map[i][j].clr.r, map[i][j].clr.g, map[i][j].clr.b);
+                    if (ShowMask)
+                        glColor3f(0,0,0);
+                    else
+                        glColor3f(map[i][j].clr.r, map[i][j].clr.g, map[i][j].clr.b);
                     glDrawElements(GL_TRIANGLES,6, GL_UNSIGNED_INT, cube.index);
                 glPopMatrix();
             }
         }
+        glDisableClientState(GL_VERTEX_ARRAY);
+        paintEnemys();
     glPopMatrix();
-    glDisableClientState(GL_VERTEX_ARRAY);
 }
 
 void WindResize(int x, int y){
@@ -136,6 +146,58 @@ void WindResize(int x, int y){
     glLoadIdentity();
     glFrustum(-k*sz, k*sz, -sz, sz, sz*2, 100);
 };
+
+//! -------------------------------------------ENEMY
+
+#define enemyCnt 40
+struct{
+    float x,y,z;
+    BOOL active;
+}enemys[enemyCnt];
+
+void initEnemys(){
+    for(int i = 0; i<enemyCnt; i++)
+    {
+        enemys[i].active = TRUE;
+        enemys[i].x = rand() % pW;
+        enemys[i].y = rand() % pH;
+        enemys[i].z = rand() % 5;
+    }
+}
+
+void paintEnemys(){
+    glEnableClientState(GL_VERTEX_ARRAY);
+        glVertexPointer(3, GL_FLOAT, 0, cube.vertex);
+        for(int i=0; i<enemyCnt; i++){
+            if(!enemys[i].active) continue;
+            glPushMatrix();
+                glTranslatef(enemys[i].x,enemys[i].y,enemys[i].z);
+                if (ShowMask)
+                    glColor3ub(255-i, 60, 43);
+                else
+                    glColor3ub(255, 60, 43);
+                glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, cube.index);
+            glPopMatrix();
+        }
+    glDisableClientState(GL_VERTEX_ARRAY);
+}
+
+void shooting(){
+    ShowMask = TRUE;
+    gameShow();
+    ShowMask = FALSE;
+
+    RECT rct;
+    GLubyte clr[3];
+    GetClientRect(hwnd, &rct);
+    glReadPixels(rct.right /2.0, rct.bottom / 2.0, 1, 1,
+                        GL_RGB, GL_UNSIGNED_BYTE, clr);
+    if (clr[0]>0)
+        enemys[255-clr[0]].active = FALSE;
+}
+
+
+//!--------------------------------------------MAIN
 
 int WINAPI WinMain(HINSTANCE hInstance,
                    HINSTANCE hPrevInstance,
@@ -210,6 +272,15 @@ int WINAPI WinMain(HINSTANCE hInstance,
             /* OpenGL animation code goes here */
             gameMove();
             gameShow();
+
+            glPushMatrix();
+                glBegin(GL_TRIANGLES);
+                    glColor3f(0.0f, 0.0f, 0.0f); glVertex2f(0, 0);
+                    glColor3f(0.0f, 0.0f, 0.0f); glVertex2f(1, 1);
+                    glColor3f(0.0f, 0.0f, 0.0f); glVertex2f(-1, -1);
+                glEnd();
+            glPopMatrix();
+
             SwapBuffers(hDC);
             Sleep (1);
         }
@@ -241,7 +312,12 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             glViewport(0, 0, width, height);
             glLoadIdentity();
             float screenRatio = width/ (float)height;
-            glFrustum(-screenRatio, screenRatio, -1,1, -1,1);
+            float sz = 0.1;
+            glFrustum(-screenRatio*sz, screenRatio*sz, -sz, sz, sz*2, 100);
+        break;
+
+        case WM_LBUTTONDOWN:
+            shooting();
         break;
 
         case WM_SETCURSOR:
