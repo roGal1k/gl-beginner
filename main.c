@@ -5,7 +5,7 @@
 
 #define M_PI 3.1415926535
 
-//screen size
+#include "camera/camera_module.h"
 int width, height;
 
 BOOL ShowMask = FALSE;
@@ -32,31 +32,11 @@ typedef struct {
     TColor clr;
 }TCell;
 
-struct {
-    float x,y,z;
-    float xRot,zRot;
-}camera = {0, 0, 1.7, 70, -40};
-
-void applyCamera(){
-    glRotatef(-camera.xRot, 1, 0, 0);
-    glRotatef(-camera.zRot, 0, 0, 1);
-    glTranslatef(-camera.x, -camera.y, -camera.z);
-}
-
 //!-----------------------------------------------------CAMERA
 
 void gameMove()
 {
     playerMove();
-}
-
-void cameraRotation(float xAngle, float zAngle){
-    camera.zRot += zAngle;
-    if (camera.zRot < 0) camera.zRot += 360;
-    if (camera.zRot >360) camera.zRot -= 360;
-    camera.xRot += xAngle;
-    if (camera.xRot < 0) camera.zRot = 0;
-    if (camera.xRot > 180) camera.zRot = 180;
 }
 
 void playerMove(){
@@ -76,14 +56,10 @@ void playerMove(){
         camera.y += cos(angle) * speed;
     }
 
-    POINT mouseCur;
-    static POINT base= {400, 300};
-    GetCursorPos(&mouseCur);
-    cameraRotation((base.y - mouseCur.y)/5.0, (base.x - mouseCur.x)/5.0);
-    SetCursorPos(base.x, base.y);
+    cameraAutoMoveByMouse(400, 300, speed);
 }
 
-//!-----------------------------------------------------------------GAME
+//!-----------------------------------------------------GAME
 
 // map size
 #define pW 40
@@ -102,15 +78,13 @@ void initMap(){
     }
 }
 
-void WindResize(int x, int y);
-
 void initGame(){
     glEnable(GL_DEPTH_TEST);
     initMap();
     initEnemys();
     RECT rct;
     GetClientRect(hwnd, &rct);
-    WindResize(rct.right, rct.bottom);
+    windResize(rct.right, rct.bottom);
 }
 
 void gameShow(){
@@ -139,15 +113,7 @@ void gameShow(){
     glPopMatrix();
 }
 
-void WindResize(int x, int y){
-    glViewport(0, 0, x, y);
-    float k = x / (float)y;
-    float sz = 0.1;
-    glLoadIdentity();
-    glFrustum(-k*sz, k*sz, -sz, sz, sz*2, 100);
-};
-
-//! -------------------------------------------ENEMY
+//!-----------------------------------------------------ENEMY
 
 #define enemyCnt 40
 struct{
@@ -197,7 +163,7 @@ void shooting(){
 }
 
 
-//!--------------------------------------------MAIN
+//!-----------------------------------------------------MAIN
 
 int WINAPI WinMain(HINSTANCE hInstance,
                    HINSTANCE hPrevInstance,
@@ -272,15 +238,6 @@ int WINAPI WinMain(HINSTANCE hInstance,
             /* OpenGL animation code goes here */
             gameMove();
             gameShow();
-
-            glPushMatrix();
-                glBegin(GL_TRIANGLES);
-                    glColor3f(0.0f, 0.0f, 0.0f); glVertex2f(0, 0);
-                    glColor3f(0.0f, 0.0f, 0.0f); glVertex2f(1, 1);
-                    glColor3f(0.0f, 0.0f, 0.0f); glVertex2f(-1, -1);
-                glEnd();
-            glPopMatrix();
-
             SwapBuffers(hDC);
             Sleep (1);
         }
