@@ -3,18 +3,30 @@
 #include <math.h>
 #include <stdio.h>
 
-#define M_PI 3.1415926535
-
 #include "camera/camera_module.h"
-int width, height;
 
-BOOL ShowMask = FALSE;
+// map size
+#define mapW 100
+#define mapH 100
+
+//count enemies
+#define enemyCnt 40
+
+int width, height;
 
 HWND hwnd;
 
 LRESULT CALLBACK WindowProc(HWND, UINT, WPARAM, LPARAM);
 void EnableOpenGL(HWND hwnd, HDC*, HGLRC*);
 void DisableOpenGL(HWND, HDC, HGLRC);
+
+//Checking whether the coordinates belong to the map
+BOOL isCoordInMap(float x, float y)
+{
+    return (x>=0 && x<mapW && y>=0 && y<mapH);
+}
+
+//!-----------------------------------------------------STRUCTURS
 
 struct {
     float vertex[24];
@@ -29,56 +41,131 @@ typedef struct {
 }TColor;
 
 typedef struct {
-    TColor clr;
+    float x,y,z;
 }TCell;
 
-//!-----------------------------------------------------CAMERA
+//!-----------------------------------------------------Preset
 
+BOOL ShowMask = FALSE;
+TCell map[mapW][mapH];
+TColor mapColors[mapW][mapH];
+GLuint mapIndexes[mapW-1][mapH-1][6];
+int mapIndexesCount = sizeof(mapIndexes)/sizeof(GLuint);
+
+//!-----------------------------------------------------MANIPULATOR
 void gameMove()
 {
     playerMove();
 }
 
-void playerMove(){
+float mapGetHeight(float x, float y);
+void playerMove()
+{
     if (GetForegroundWindow() != hwnd) return;
 
     float angle = -camera.zRot /180 * M_PI;
     float speed = 0;
 
-    if(GetKeyState('W') <0) speed = 0.1;
+    if(GetKeyState('W') <0 && GetKeyState(VK_SHIFT) <0) speed = 0.175;
+        else if(GetKeyState('W') <0) speed = 0.1;
     if(GetKeyState('S') <0) speed = -0.1;
     if(GetKeyState('D') <0) {speed = -0.1; angle -= M_PI*0.5;};
     if(GetKeyState('A') <0) {speed = -0.1; angle += M_PI*0.5;};
 
     if(speed!=0)
     {
+        if (!isCoordInMap(camera.x + sin(angle) * speed, camera.y + cos(angle) * speed)) return 0;
         camera.x += sin(angle) * speed;
         camera.y += cos(angle) * speed;
+        camera.z = 1.7 + mapGetHeight(camera.x, camera.y);
     }
 
-    cameraAutoMoveByMouse(400, 300, speed);
+    float speedCam = 0.2;
+    cameraAutoMoveByMouse(400, 300, speedCam);
 }
 
-//!-----------------------------------------------------GAME
+float mapGetHeight(float x, float y)
+{
+    if(!isCoordInMap(x,y)) return 0;
 
-// map size
-#define pW 40
-#define pH 40
-TCell map[pW][pH];
+    int cX = (int)x;
+    int cY = (int)y;
+        printf("x,y: %f%,%f, cx,cy:%f,%f\n",x,y,cX,cY);
 
-void initMap(){
-    for (int i=0; i<pW; i++){
-        for (int j=0; j<pH; j++)
+    float h1 = (1-(x-cX))*map[cX][cY].z + (x-cX)*map[cX+1][cY].z;
+    float h2 = (1-(x-cX))*map[cX][cY+1].z + (x-cX)*map[cX+1][cY+1].z;
+    float h = (1-(y-cY))*h1 + (y-cY)*h2;
+            printf("camera[h1,h2,h]: %f%,%f,%f\n",h1, h2, h);
+
+    return h;
+}
+
+//!-----------------------------------------------------MAP
+
+void initMap()
+{
+    for (int i=0; i<mapW; i++){
+        int pos = i*mapH;
+        for (int j=0; j<mapH; j++)
         {
-            float dc = (rand() %2) *0.1;
-            map[i][j].clr.r = 0.31 + dc;
-            map[i][j].clr.g = 0.5 + dc;
-            map[i][j].clr.b = 0.13 + dc;
+            if (i < mapW-1 && j < mapH-1)
+            {
+                mapIndexes[i][j][0] = pos;
+                mapIndexes[i][j][1] = pos + 1;
+                mapIndexes[i][j][2] = pos + 1 + mapH;
+
+                mapIndexes[i][j][3] = pos + 1 + mapH;
+                mapIndexes[i][j][4] = pos + mapH;
+                mapIndexes[i][j][5] = pos;
+                pos++;
+            };
+
+            float dc = (float)(rand() % 20) *0.01;
+            mapColors[i][j].r = 0.31 + dc;
+            mapColors[i][j].g = 0.5 + dc;
+            mapColors[i][j].b = 0.13 + dc;
+            map[i][j].x = i;
+            map[i][j].y = j;
+            map[i][j].z = (rand() %10) *0.05;
+        }
+    }
+
+    for (int i=0; i<10; i++){
+        mapCreateHill(rand()%mapW, rand()%mapH, rand() % mapW/10, mapW/15);
+    }
+
+    //pseudo lighted terrain
+    for (int i=0; i<mapW; i++){
+        for (int j=0; j<mapH; j++){
+            float dc = (map[i+1][j+1].z - map[i][j].z)*0.2;
+            mapColors[i][j].r += dc;
+            mapColors[i][j].g += dc;
+            mapColors[i][j].b += dc;
         }
     }
 }
 
-void initGame(){
+//buff the map with hill
+void mapCreateHill(int posX, int posY, int radius, int heightExtremum)
+{
+    if(radius==0 || (posX-radius)<0 || (posY-radius)<0) return;
+    for(int i= posX - radius; i <= posX + radius; i++){
+        for(int j = posY -radius; j <= posY + radius; j++){
+            if(isCoordInMap(i,j)){
+                float length = sqrt(pow(posX-i,2) + pow(posY-j,2));
+                if(length < radius){
+                    length = length / radius * M_PI_2;
+                    map[i][j].z =cos(length) * heightExtremum;
+                }
+            }
+        }
+    }
+}
+
+//!-----------------------------------------------------GAME
+
+void initGame()
+{
     glEnable(GL_DEPTH_TEST);
     initMap();
     initEnemys();
@@ -87,27 +174,27 @@ void initGame(){
     windResize(rct.right, rct.bottom);
 }
 
-void gameShow(){
+void gameShow()
+{
     if(ShowMask) glClearColor(0,0,0,0);
     else glClearColor(0.6, 0.8, 1, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glPushMatrix();
         applyCamera();
+
         glEnableClientState(GL_VERTEX_ARRAY);
-        glVertexPointer(3, GL_FLOAT, 0, cube.vertex);
-        for (int i=0; i<pW; i++){
-            for (int j=0; j<pH; j++){
-                glPushMatrix();
-                    glTranslatef(i,j,0);
-                    if (ShowMask)
-                        glColor3f(0,0,0);
-                    else
-                        glColor3f(map[i][j].clr.r, map[i][j].clr.g, map[i][j].clr.b);
-                    glDrawElements(GL_TRIANGLES,6, GL_UNSIGNED_INT, cube.index);
-                glPopMatrix();
-            }
-        }
+        glEnableClientState(GL_COLOR_ARRAY);
+        glVertexPointer(3, GL_FLOAT, 0, map);
+        glColorPointer(3, GL_FLOAT, 0, mapColors);
+            glPushMatrix();
+                if (ShowMask)
+                    glColor3f(0,0,0);
+                else
+                    glColorPointer(3, GL_FLOAT, 0, mapColors);
+               glDrawElements(GL_TRIANGLES, mapIndexesCount, GL_UNSIGNED_INT, mapIndexes);
+            glPopMatrix();
+        glDisableClientState(GL_COLOR_ARRAY);
         glDisableClientState(GL_VERTEX_ARRAY);
         paintEnemys();
     glPopMatrix();
@@ -115,29 +202,30 @@ void gameShow(){
 
 //!-----------------------------------------------------ENEMY
 
-#define enemyCnt 40
 struct{
     float x,y,z;
     BOOL active;
-}enemys[enemyCnt];
+}enemies[enemyCnt];
 
-void initEnemys(){
+void initEnemys()
+{
     for(int i = 0; i<enemyCnt; i++)
     {
-        enemys[i].active = TRUE;
-        enemys[i].x = rand() % pW;
-        enemys[i].y = rand() % pH;
-        enemys[i].z = rand() % 5;
+        enemies[i].active = TRUE;
+        enemies[i].x = rand() % mapW;
+        enemies[i].y = rand() % mapH;
+        enemies[i].z = rand() % 5;
     }
 }
 
-void paintEnemys(){
+void paintEnemys()
+{
     glEnableClientState(GL_VERTEX_ARRAY);
         glVertexPointer(3, GL_FLOAT, 0, cube.vertex);
         for(int i=0; i<enemyCnt; i++){
-            if(!enemys[i].active) continue;
+            if(!enemies[i].active) continue;
             glPushMatrix();
-                glTranslatef(enemys[i].x,enemys[i].y,enemys[i].z);
+                glTranslatef(enemies[i].x,enemies[i].y,enemies[i].z);
                 if (ShowMask)
                     glColor3ub(255-i, 60, 43);
                 else
@@ -148,7 +236,10 @@ void paintEnemys(){
     glDisableClientState(GL_VERTEX_ARRAY);
 }
 
-void shooting(){
+//!-----------------------------------------------------Gameplay
+
+void shooting()
+{
     ShowMask = TRUE;
     gameShow();
     ShowMask = FALSE;
@@ -159,9 +250,8 @@ void shooting(){
     glReadPixels(rct.right /2.0, rct.bottom / 2.0, 1, 1,
                         GL_RGB, GL_UNSIGNED_BYTE, clr);
     if (clr[0]>0)
-        enemys[255-clr[0]].active = FALSE;
+        enemies[255-clr[0]].active = FALSE;
 }
-
 
 //!-----------------------------------------------------MAIN
 
@@ -266,11 +356,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         case WM_SIZE:
             width = LOWORD(lParam);
             height = HIWORD(lParam);
-            glViewport(0, 0, width, height);
-            glLoadIdentity();
-            float screenRatio = width/ (float)height;
-            float sz = 0.1;
-            glFrustum(-screenRatio*sz, screenRatio*sz, -sz, sz, sz*2, 100);
+            windResize(width, height);
         break;
 
         case WM_LBUTTONDOWN:

@@ -21,7 +21,7 @@ void cameraAutoMoveByMouse(int midleX, int midleY, float speed){
     POINT mouseCur;
     POINT base = {midleX, midleY};
     GetCursorPos(&mouseCur);
-    cameraRotation((base.y - mouseCur.y)/5.0, (base.x - mouseCur.x)/5.0);
+    cameraRotation((base.y - mouseCur.y) * speed, (base.x - mouseCur.x) * speed);
     SetCursorPos(base.x, base.y);
 }
 
