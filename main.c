@@ -3,254 +3,20 @@
 #include <math.h>
 #include <stdio.h>
 
-#include "camera/camera_module.h"
-
-// map size
-#define mapW 100
-#define mapH 100
-
-//count enemies
-#define enemyCnt 40
-
-int width, height;
-
-HWND hwnd;
-
 LRESULT CALLBACK WindowProc(HWND, UINT, WPARAM, LPARAM);
 void EnableOpenGL(HWND hwnd, HDC*, HGLRC*);
 void DisableOpenGL(HWND, HDC, HGLRC);
 
-//Checking whether the coordinates belong to the map
-BOOL isCoordInMap(float x, float y)
-{
-    return (x>=0 && x<mapW && y>=0 && y<mapH);
-}
-
-//!-----------------------------------------------------STRUCTURS
-
-struct {
-    float vertex[24];
-    GLuint index[36];
-}cube ={
-    {0,0,0, 0,1,0, 1,1,0, 1,0,0, 0,0,1, 0,1,1, 1,1,1, 1,0,1},
-    {0,1,2, 2,3,0, 4,5,6, 6,7,4, 3,2,5, 6,7,3, 0,1,5, 5,4,0, 1,2,6, 6,5,1, 0,3,7, 7,4,0}
-};
-
-typedef struct {
-    float r,g,b;
-}TColor;
-
-typedef struct {
-    float x,y,z;
-}TCell;
-
-//!-----------------------------------------------------Preset
-
-BOOL ShowMask = FALSE;
-TCell map[mapW][mapH];
-TColor mapColors[mapW][mapH];
-GLuint mapIndexes[mapW-1][mapH-1][6];
-int mapIndexesCount = sizeof(mapIndexes)/sizeof(GLuint);
-
-//!-----------------------------------------------------MANIPULATOR
-void gameMove()
-{
-    playerMove();
-}
-
-float mapGetHeight(float x, float y);
-void playerMove()
-{
-    if (GetForegroundWindow() != hwnd) return;
-
-    float angle = -camera.zRot /180 * M_PI;
-    float speed = 0;
-
-    if(GetKeyState('W') <0 && GetKeyState(VK_SHIFT) <0) speed = 0.175;
-        else if(GetKeyState('W') <0) speed = 0.1;
-    if(GetKeyState('S') <0) speed = -0.1;
-    if(GetKeyState('D') <0) {speed = -0.1; angle -= M_PI*0.5;};
-    if(GetKeyState('A') <0) {speed = -0.1; angle += M_PI*0.5;};
-
-    if(speed!=0)
-    {
-        if (!isCoordInMap(camera.x + sin(angle) * speed, camera.y + cos(angle) * speed)) return 0;
-        camera.x += sin(angle) * speed;
-        camera.y += cos(angle) * speed;
-        camera.z = 1.7 + mapGetHeight(camera.x, camera.y);
-    }
-
-    float speedCam = 0.2;
-    cameraAutoMoveByMouse(400, 300, speedCam);
-}
-
-float mapGetHeight(float x, float y)
-{
-    if(!isCoordInMap(x,y)) return 0;
-
-    int cX = (int)x;
-    int cY = (int)y;
-        printf("x,y: %f%,%f, cx,cy:%f,%f\n",x,y,cX,cY);
-
-    float h1 = (1-(x-cX))*map[cX][cY].z + (x-cX)*map[cX+1][cY].z;
-    float h2 = (1-(x-cX))*map[cX][cY+1].z + (x-cX)*map[cX+1][cY+1].z;
-    float h = (1-(y-cY))*h1 + (y-cY)*h2;
-            printf("camera[h1,h2,h]: %f%,%f,%f\n",h1, h2, h);
-
-    return h;
-}
-
-//!-----------------------------------------------------MAP
-
-void initMap()
-{
-    for (int i=0; i<mapW; i++){
-        int pos = i*mapH;
-        for (int j=0; j<mapH; j++)
-        {
-            if (i < mapW-1 && j < mapH-1)
-            {
-                mapIndexes[i][j][0] = pos;
-                mapIndexes[i][j][1] = pos + 1;
-                mapIndexes[i][j][2] = pos + 1 + mapH;
-
-                mapIndexes[i][j][3] = pos + 1 + mapH;
-                mapIndexes[i][j][4] = pos + mapH;
-                mapIndexes[i][j][5] = pos;
-                pos++;
-            };
-
-            float dc = (float)(rand() % 20) *0.01;
-            mapColors[i][j].r = 0.31 + dc;
-            mapColors[i][j].g = 0.5 + dc;
-            mapColors[i][j].b = 0.13 + dc;
-            map[i][j].x = i;
-            map[i][j].y = j;
-            map[i][j].z = (rand() %10) *0.05;
-        }
-    }
-
-    for (int i=0; i<10; i++){
-        mapCreateHill(rand()%mapW, rand()%mapH, rand() % mapW/10, mapW/15);
-    }
-
-    //pseudo lighted terrain
-    for (int i=0; i<mapW; i++){
-        for (int j=0; j<mapH; j++){
-            float dc = (map[i+1][j+1].z - map[i][j].z)*0.2;
-            mapColors[i][j].r += dc;
-            mapColors[i][j].g += dc;
-            mapColors[i][j].b += dc;
-        }
-    }
-}
-
-//buff the map with hill
-void mapCreateHill(int posX, int posY, int radius, int heightExtremum)
-{
-    if(radius==0 || (posX-radius)<0 || (posY-radius)<0) return;
-    for(int i= posX - radius; i <= posX + radius; i++){
-        for(int j = posY -radius; j <= posY + radius; j++){
-            if(isCoordInMap(i,j)){
-                float length = sqrt(pow(posX-i,2) + pow(posY-j,2));
-                if(length < radius){
-                    length = length / radius * M_PI_2;
-                    map[i][j].z =cos(length) * heightExtremum;
-                }
-            }
-        }
-    }
-}
-
-//!-----------------------------------------------------GAME
-
-void initGame()
-{
-    glEnable(GL_DEPTH_TEST);
-    initMap();
-    initEnemys();
-    RECT rct;
-    GetClientRect(hwnd, &rct);
-    windResize(rct.right, rct.bottom);
-}
-
-void gameShow()
-{
-    if(ShowMask) glClearColor(0,0,0,0);
-    else glClearColor(0.6, 0.8, 1, 0);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    glPushMatrix();
-        applyCamera();
-
-        glEnableClientState(GL_VERTEX_ARRAY);
-        glEnableClientState(GL_COLOR_ARRAY);
-        glVertexPointer(3, GL_FLOAT, 0, map);
-        glColorPointer(3, GL_FLOAT, 0, mapColors);
-            glPushMatrix();
-                if (ShowMask)
-                    glColor3f(0,0,0);
-                else
-                    glColorPointer(3, GL_FLOAT, 0, mapColors);
-               glDrawElements(GL_TRIANGLES, mapIndexesCount, GL_UNSIGNED_INT, mapIndexes);
-            glPopMatrix();
-        glDisableClientState(GL_COLOR_ARRAY);
-        glDisableClientState(GL_VERTEX_ARRAY);
-        paintEnemys();
-    glPopMatrix();
-}
-
-//!-----------------------------------------------------ENEMY
-
-struct{
-    float x,y,z;
-    BOOL active;
-}enemies[enemyCnt];
-
-void initEnemys()
-{
-    for(int i = 0; i<enemyCnt; i++)
-    {
-        enemies[i].active = TRUE;
-        enemies[i].x = rand() % mapW;
-        enemies[i].y = rand() % mapH;
-        enemies[i].z = rand() % 5;
-    }
-}
-
-void paintEnemys()
-{
+float vertex[] = {-1,-1,0, 1,-1,0, 1,1,0, -1,1,0};
+float normal[] = {-1,-1,3, 1,-1,3, 1,1,3, -1,1,3};
+void drawRectangle(){
     glEnableClientState(GL_VERTEX_ARRAY);
-        glVertexPointer(3, GL_FLOAT, 0, cube.vertex);
-        for(int i=0; i<enemyCnt; i++){
-            if(!enemies[i].active) continue;
-            glPushMatrix();
-                glTranslatef(enemies[i].x,enemies[i].y,enemies[i].z);
-                if (ShowMask)
-                    glColor3ub(255-i, 60, 43);
-                else
-                    glColor3ub(255, 60, 43);
-                glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, cube.index);
-            glPopMatrix();
-        }
+    glEnableClientState(GL_NORMAL_ARRAY);
+        glVertexPointer(3, GL_FLOAT, 0, vertex);
+        glNormalPointer(GL_FLOAT, 0, normal);
+        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     glDisableClientState(GL_VERTEX_ARRAY);
-}
-
-//!-----------------------------------------------------Gameplay
-
-void shooting()
-{
-    ShowMask = TRUE;
-    gameShow();
-    ShowMask = FALSE;
-
-    RECT rct;
-    GLubyte clr[3];
-    GetClientRect(hwnd, &rct);
-    glReadPixels(rct.right /2.0, rct.bottom / 2.0, 1, 1,
-                        GL_RGB, GL_UNSIGNED_BYTE, clr);
-    if (clr[0]>0)
-        enemies[255-clr[0]].active = FALSE;
+    glDisableClientState(GL_NORMAL_ARRAY);
 }
 
 //!-----------------------------------------------------MAIN
@@ -264,6 +30,7 @@ int WINAPI WinMain(HINSTANCE hInstance,
     HDC hDC;
     HGLRC hRC;
     MSG msg;
+    HWND hwnd;
     BOOL bQuit = FALSE;
     float theta = 0.0f;
 
@@ -304,7 +71,18 @@ int WINAPI WinMain(HINSTANCE hInstance,
     /* enable OpenGL for the window */
     EnableOpenGL(hwnd, &hDC, &hRC);
 
-    initGame();
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glFrustum(-0.1,0.1,-0.1,0.1,0.2,1000);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    glEnable(GL_DEPTH_TEST);
+
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+    glEnable(GL_COLOR_MATERIAL);
+    glEnable(GL_NORMALIZE);
 
     /* program main loop */
     while (!bQuit)
@@ -326,9 +104,34 @@ int WINAPI WinMain(HINSTANCE hInstance,
         else
         {
             /* OpenGL animation code goes here */
-            gameMove();
-            gameShow();
+            glClearColor(0.6, 0.8, 1, 0);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            glPushMatrix();
+
+                glRotatef(-60,1,0,0);
+                glRotatef(33,0,0,1);
+                glTranslatef(2,3,-2);
+
+                glPushMatrix();
+                    glRotatef(theta,0,1,0);
+                    float position[] = {0,0,1,0};
+                    glLightfv(GL_LIGHT0, GL_POSITION, position);
+
+                    glTranslatef(0,0,1);
+                    glScalef(0.2, 0.2, 0.2);
+                    glColor3f(1,1,1);
+                    drawRectangle();
+
+                glPopMatrix();
+
+                glColor3f(0.1,0.6,0.1);
+                drawRectangle();
+            glPopMatrix();
+
             SwapBuffers(hDC);
+            theta+=1.0f;
+
             Sleep (1);
         }
     }
@@ -352,20 +155,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         case WM_DESTROY:
             return 0;
-
-        case WM_SIZE:
-            width = LOWORD(lParam);
-            height = HIWORD(lParam);
-            windResize(width, height);
-        break;
-
-        case WM_LBUTTONDOWN:
-            shooting();
-        break;
-
-        case WM_SETCURSOR:
-            ShowCursor(FALSE);
-        break;
 
         case WM_KEYDOWN:
         {
