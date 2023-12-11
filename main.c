@@ -9,12 +9,54 @@ void DisableOpenGL(HWND, HDC, HGLRC);
 
 float vertex[] = {-1,-1,0, 1,-1,0, 1,1,0, -1,1,0};
 float normal[] = {-1,-1,3, 1,-1,3, 1,1,3, -1,1,3};
+
+float vertexCube[] = {
+    -1,-1,0,
+    1,-1,0,
+    1,1,0,
+    -1,1,0,
+    -1,-1,1,
+    1,-1,1,
+    1,1,1,
+    -1,1,1
+};
+
+GLuint indexCube[] = {
+    0,1,2,
+    1,2,3,
+
+    4,5,6,
+    5,6,7,
+
+    0,1,5,
+    0,4,5,
+
+    3,2,6,
+    3,7,6,
+
+    1,2,6,
+    2,5,6,
+
+    0,4,7,
+    0,3,7
+};
+
 void drawRectangle(){
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
         glVertexPointer(3, GL_FLOAT, 0, vertex);
         glNormalPointer(GL_FLOAT, 0, normal);
         glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_NORMAL_ARRAY);
+}
+
+void drawCube(){
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_NORMAL_ARRAY);
+        glVertexPointer(3, GL_FLOAT, 0, vertexCube);
+        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, indexCube);
+        glNormalPointer(GL_FLOAT, 0, normal);
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_NORMAL_ARRAY);
 }
@@ -126,7 +168,9 @@ int WINAPI WinMain(HINSTANCE hInstance,
                 glPopMatrix();
 
                 glColor3f(0.1,0.6,0.1);
-                drawRectangle();
+                glTranslatef(0,0,-0.5);
+                glScalef(0.5,0.5,1);
+                drawCube();
             glPopMatrix();
 
             SwapBuffers(hDC);
