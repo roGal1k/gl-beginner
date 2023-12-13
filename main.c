@@ -7,8 +7,8 @@ LRESULT CALLBACK WindowProc(HWND, UINT, WPARAM, LPARAM);
 void EnableOpenGL(HWND hwnd, HDC*, HGLRC*);
 void DisableOpenGL(HWND, HDC, HGLRC);
 
-float vertex[] = {-1,-1,0, 1,-1,0, 1,1,0, -1,1,0};
-float normal[] = {-1,-1,3, 1,-1,3, 1,1,3, -1,1,3};
+float vertex[] = {-1,-1,1, 1,-1,1, 1,1,1, -1,1,1};
+float normal[] = {-1,-1,1, 1,-1,1, 1,1,1, -1,1,1};
 
 float vertexCube[] = {
     -1,-1,0,
@@ -41,6 +41,9 @@ GLuint indexCube[] = {
     0,3,7
 };
 
+
+
+
 void drawRectangle(){
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
@@ -60,6 +63,25 @@ void drawCube(){
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_NORMAL_ARRAY);
 }
+
+void drawCubeFromRectangle(){
+    glPushMatrix();
+    glScalef(0.3,0.3,0.3);
+            glRotatef(90,1,0,0);
+        drawRectangle();
+            glRotatef(90,1,0,0);
+        drawRectangle();
+            glRotatef(90,1,0,0);
+        drawRectangle();
+            glRotatef(90,1,0,0);
+        drawRectangle();
+            glRotatef(90,0,1,0);
+        drawRectangle();
+            glRotatef(180,0,1,0);
+        drawRectangle();
+    glPopMatrix();
+}
+
 
 //!-----------------------------------------------------MAIN
 
@@ -168,9 +190,12 @@ int WINAPI WinMain(HINSTANCE hInstance,
                 glPopMatrix();
 
                 glColor3f(0.1,0.6,0.1);
-                glTranslatef(0,0,-0.5);
+                /*glTranslatef(0,0,-0.5);
                 glScalef(0.5,0.5,1);
-                drawCube();
+                drawCube();*/
+
+                drawCubeFromRectangle();
+
             glPopMatrix();
 
             SwapBuffers(hDC);

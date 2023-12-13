@@ -1,10 +1,9 @@
 # depslib dependency file v1.0
-1701730553 source:c:\users\galik\documents\git\gl-beginner\main.c
+1702348493 source:c:\users\galik\documents\git\gl-beginner\main.c
 	<windows.h>
 	<gl/gl.h>
 	<math.h>
 	<stdio.h>
-	"camera/camera_module.h"
 
 1701618001 source:c:\users\galik\documents\git\gl-beginner\camera_module.c
 	"camera_module.h"
