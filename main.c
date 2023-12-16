@@ -11,8 +11,6 @@ void EnableOpenGL(HWND hwnd, HDC*, HGLRC*);
 void DisableOpenGL(HWND, HDC, HGLRC);
 
 float vertex[] = {-1,-1,1, 1,-1,1, 1,1,1, -1,1,1};
-float normal[] = {-1,-1,1, 1,-1,1, 1,1,1, -1,1,1};
-
 
 float texCoord[] = {0,1,
                     1,1,
@@ -53,7 +51,6 @@ void drawRectangle(){
     glEnableClientState(GL_NORMAL_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
         glVertexPointer(3, GL_FLOAT, 0, vertex);
-        glNormalPointer(GL_FLOAT, 0, normal);
         glTexCoordPointer(2, GL_FLOAT, 0, texCoord);
         glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -66,10 +63,11 @@ void drawCube(){
     glEnableClientState(GL_NORMAL_ARRAY);
         glVertexPointer(3, GL_FLOAT, 0, vertexCube);
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, indexCube);
-        glNormalPointer(GL_FLOAT, 0, normal);
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_NORMAL_ARRAY);
 }
+
+void initialTextures();
 
 void drawCubeFromRectangle(){
     glPushMatrix();
@@ -174,19 +172,15 @@ int WINAPI WinMain(HINSTANCE hInstance,
     /* enable OpenGL for the window */
     EnableOpenGL(hwnd, &hDC, &hRC);
 
-    //glMatrixMode(GL_PROJECTION);
-    //glLoadIdentity();
-    //glFrustum(-0.1,0.1,-0.1,0.1,0.2,1000);
-    //glMatrixMode(GL_MODELVIEW);
-    //glLoadIdentity();
+    glFrustum(50,50,-40,5,-20,1000);
 
-    //glEnable(GL_DEPTH_TEST);
+    glEnable(GL_DEPTH_TEST);
 
-    //glEnable(GL_LIGHTING);
-    //glEnable(GL_LIGHT0);
-    //glEnable(GL_COLOR_MATERIAL);
-    //glEnable(GL_NORMALIZE);
+    glEnable(GL_COLOR_MATERIAL);
+    glEnable(GL_NORMALIZE);
+
     initialTextures();
+
     /* program main loop */
     while (!bQuit)
     {
@@ -211,7 +205,8 @@ int WINAPI WinMain(HINSTANCE hInstance,
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             glPushMatrix();
-                drawRectangle();
+                glRotatef(45,1,0,1);
+                drawCubeFromRectangle();
             glPopMatrix();
 
             SwapBuffers(hDC);
