@@ -67,8 +67,6 @@ void drawCube(){
     glDisableClientState(GL_NORMAL_ARRAY);
 }
 
-void initialTextures();
-
 void drawCubeFromRectangle(){
     glPushMatrix();
     glScalef(0.3,0.3,0.3);
@@ -89,7 +87,7 @@ void drawCubeFromRectangle(){
 
 //!-----------------------------------------------------TEXTURE
 
-void initialTextures(){
+void loadTextures(char* filename, int *textureID){
     int width, height;
     width = 2;
     height = 2;
@@ -102,11 +100,11 @@ void initialTextures(){
     data[0][1].r = 255;
     data[0][1].g = 255;
 
-    unsigned char *dataFromFile = stbi_load("texture.png", &width, &height, &n, 0);
+    unsigned char *dataFromFile = stbi_load(filename, &width, &height, &n, 0);
 
 
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
+    glGenTextures(1, textureID);
+    glBindTexture(GL_TEXTURE_2D, *textureID);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -118,6 +116,10 @@ void initialTextures(){
     glBindTexture(GL_TEXTURE_2D, 0);
 
     stbi_image_free(dataFromFile);
+}
+
+void gameInit(){
+    loadTextures("texture.png", &texture);
 }
 
 //!-----------------------------------------------------MAIN
@@ -172,14 +174,14 @@ int WINAPI WinMain(HINSTANCE hInstance,
     /* enable OpenGL for the window */
     EnableOpenGL(hwnd, &hDC, &hRC);
 
-    glFrustum(50,50,-40,5,-20,1000);
+    glFrustum(-0.1,0.1,-0.1,0.1,0.2,1000);
 
     glEnable(GL_DEPTH_TEST);
 
     glEnable(GL_COLOR_MATERIAL);
     glEnable(GL_NORMALIZE);
 
-    initialTextures();
+    gameInit();
 
     /* program main loop */
     while (!bQuit)
@@ -205,7 +207,9 @@ int WINAPI WinMain(HINSTANCE hInstance,
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             glPushMatrix();
-                glRotatef(45,1,0,1);
+                glRotatef(-60,1,0,0);
+                glRotatef(33,0,0,1);
+                glTranslatef(2,3,-2);
                 drawCubeFromRectangle();
             glPopMatrix();
 
