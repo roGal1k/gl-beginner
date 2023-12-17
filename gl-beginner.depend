@@ -1,9 +1,10 @@
 # depslib dependency file v1.0
-1702348493 source:c:\users\galik\documents\git\gl-beginner\main.c
+1702786889 source:c:\users\galik\documents\git\gl-beginner\main.c
 	<windows.h>
 	<gl/gl.h>
 	<math.h>
 	<stdio.h>
+	"../stb_image/stb_image.h"
 
 1701618001 source:c:\users\galik\documents\git\gl-beginner\camera_module.c
 	"camera_module.h"
@@ -18,4 +19,21 @@
 1701700790 c:\users\galik\documents\git\gl-beginner\camera\camera_module.h
 	<windows.h>
 	<GL/gl.h>
+
+1702615509 c:\users\galik\documents\git\stb_image\stb_image.h
+	"stb_image.h"
+	<stdio.h>
+	<stdlib.h>
+	<stdarg.h>
+	<stddef.h>
+	<stdlib.h>
+	<string.h>
+	<limits.h>
+	<math.h>
+	<stdio.h>
+	<assert.h>
+	<stdint.h>
+	<emmintrin.h>
+	<intrin.h>
+	<arm_neon.h>
 

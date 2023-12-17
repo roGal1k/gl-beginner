@@ -10,116 +10,35 @@ LRESULT CALLBACK WindowProc(HWND, UINT, WPARAM, LPARAM);
 void EnableOpenGL(HWND hwnd, HDC*, HGLRC*);
 void DisableOpenGL(HWND, HDC, HGLRC);
 
-float vertex[] = {-1,-1,1, 1,-1,1, 1,1,1, -1,1,1};
+//!-----------------------------------------------------RECTANGLE
 
-float texCoord[] = {0,1,
-                    1,1,
-                    1,0,
-                    0,0};
+float rectVert[] = {0,0,1, 0,1,1, 1,1,1, 1,0,1};
+float rectInd[] = {0,1,2,3};
 
-float vertexCube[] = {
-    -1,-1,0,
-    1,-1,0,
-    1,1,0,
-    -1,1,0,
-    -1,-1,1,
-    1,-1,1,
-    1,1,1,
-    -1,1,1
-};
-GLuint indexCube[] = {
-    0,1,2,
-    1,2,3,
-    4,5,6,
-    5,6,7,
-    0,1,5,
-    0,4,5,
-    3,2,6,
-    3,7,6,
-    1,2,6,
-    2,5,6,
-    0,4,7,
-    0,3,7
-};
-
-unsigned int texture;
-
-void drawRectangle(){
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_NORMAL_ARRAY);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-        glVertexPointer(3, GL_FLOAT, 0, vertex);
-        glTexCoordPointer(2, GL_FLOAT, 0, texCoord);
-        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_NORMAL_ARRAY);
-}
-
-void drawCube(){
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_NORMAL_ARRAY);
-        glVertexPointer(3, GL_FLOAT, 0, vertexCube);
-        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, indexCube);
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_NORMAL_ARRAY);
-}
-
-void drawCubeFromRectangle(){
+void showRect(){
     glPushMatrix();
-    glScalef(0.3,0.3,0.3);
-            glRotatef(90,1,0,0);
-        drawRectangle();
-            glRotatef(90,1,0,0);
-        drawRectangle();
-            glRotatef(90,1,0,0);
-        drawRectangle();
-            glRotatef(90,1,0,0);
-        drawRectangle();
-            glRotatef(90,0,1,0);
-        drawRectangle();
-            glRotatef(180,0,1,0);
-        drawRectangle();
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glVertexPointer(3,GL_FLOAT,0,rectVert);
+
+        glColor4f(0,0,1,1);
+        glTranslatef(0,0,-0.1);
+        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+        glColor4f(1,0,0,1);
+        glTranslatef(-0.5,-0.5,-0.5);
+        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+        glDisableClientState(GL_VERTEX_ARRAY);
     glPopMatrix();
 }
 
-//!-----------------------------------------------------TEXTURE
+//!-----------------------------------------------------PRESETS
 
-void loadTextures(char* filename, int *textureID){
-    int width, height;
-    width = 2;
-    height = 2;
-    int n;
-    struct {unsigned char r,g,b,a;} data[2][2];
-    memset(data, 0, sizeof(data));
-    data[0][0].r = 255;
-    data[1][0].g = 255;
-    data[1][1].b = 255;
-    data[0][1].r = 255;
-    data[0][1].g = 255;
-
-    unsigned char *dataFromFile = stbi_load(filename, &width, &height, &n, 0);
-
-
-    glGenTextures(1, textureID);
-    glBindTexture(GL_TEXTURE_2D, *textureID);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    //load texture from array into gpu
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height,
-                                0, n == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, dataFromFile);
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    stbi_image_free(dataFromFile);
-}
-
-void gameInit(){
-    loadTextures("texture.png", &texture);
+void initGame(){
+    glEnable(GL_DEPTH_TEST);
+    glFrustum(-0.1,0.1,-0.1,0.1,-2,100);
+    glEnable(GL_BLEND); //include blended color
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); //setting how color is blend, first is current and second is buffer
 }
 
 //!-----------------------------------------------------MAIN
@@ -173,15 +92,7 @@ int WINAPI WinMain(HINSTANCE hInstance,
 
     /* enable OpenGL for the window */
     EnableOpenGL(hwnd, &hDC, &hRC);
-
-    glFrustum(-0.1,0.1,-0.1,0.1,0.2,1000);
-
-    glEnable(GL_DEPTH_TEST);
-
-    glEnable(GL_COLOR_MATERIAL);
-    glEnable(GL_NORMALIZE);
-
-    gameInit();
+    initGame();
 
     /* program main loop */
     while (!bQuit)
@@ -203,15 +114,10 @@ int WINAPI WinMain(HINSTANCE hInstance,
         else
         {
             /* OpenGL animation code goes here */
-            glClearColor(0.6, 0.8, 1, 0);
+            glClearColor(0,0,0, 1);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            glPushMatrix();
-                glRotatef(-60,1,0,0);
-                glRotatef(33,0,0,1);
-                glTranslatef(2,3,-2);
-                drawCubeFromRectangle();
-            glPopMatrix();
+            showRect();
 
             SwapBuffers(hDC);
             theta+=1.0f;
