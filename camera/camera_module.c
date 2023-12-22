@@ -29,6 +29,11 @@ void windResize(int x, int y){
     glViewport(0, 0, x, y);
     float k = x / (float)y;
     float sz = 0.1;
+
+    glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glFrustum(-k*sz, k*sz, -sz, sz, sz*2, 100);
+    glFrustum(-k*sz, k*sz, -sz, sz, sz*2, 1000);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
 };
