@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1703087554 source:c:\users\galik\documents\git\gl-beginner\main.c
+1703497186 source:c:\users\galik\documents\git\gl-beginner\main.c
 	<windows.h>
 	<gl/gl.h>
 	<math.h>
@@ -15,10 +15,10 @@
 	<windows.h>
 	<GL/gl.h>
 
-1702801811 source:c:\users\galik\documents\git\gl-beginner\camera\camera_module.c
+1703341241 source:c:\users\galik\documents\git\gl-beginner\camera\camera_module.c
 	"camera_module.h"
 
-1701700790 c:\users\galik\documents\git\gl-beginner\camera\camera_module.h
+1703341241 c:\users\galik\documents\git\gl-beginner\camera\camera_module.h
 	<windows.h>
 	<GL/gl.h>
 
@@ -39,5 +39,5 @@
 	<intrin.h>
 	<arm_neon.h>
 
-1703087269 c:\users\galik\documents\git\gl-beginner\main.h
+1703490191 c:\users\galik\documents\git\gl-beginner\main.h
 

@@ -8,25 +8,132 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "../stb_image/stb_image.h"
 
-// map size
-#define mapW 100
-#define mapH 100
-
-//count enemies
-#define enemyCnt 40
-
 LRESULT CALLBACK WindowProc(HWND, UINT, WPARAM, LPARAM);
 void EnableOpenGL(HWND hwnd, HDC*, HGLRC*);
 void DisableOpenGL(HWND, HDC, HGLRC);
 
-//Checking whether the coordinates belong to the map
-BOOL isCoordInMap(float x, float y)
-{
-    return (x>=0 && x<mapW && y>=0 && y<mapH);
+//!-----------------------------------------------------PRESETS
+BOOL ShowMask = FALSE;
+TCell map[mapW][mapH];
+TUV mapUV[mapW][mapH];
+TCell mapNormals[mapW][mapH];
+GLuint mapIndexes[mapW-1][mapH-1][6];
+int mapIndexesCount = sizeof(mapIndexes)/sizeof(GLuint);
+
+//!-----------------------------------------------------TREES
+void initWoods(int woodSize){
+    woodsSize = woodSize;
+    woods = realloc(woods, sizeof(*woods)*woodsSize);
+
+    for (int i=0; i < woodsSize; i++)
+    {
+        creatTrees(woods+i, texBirch);
+    }
+};
+
+void creatTrees(TWood *obj, int type){
+    obj->type = type;
+    int logs = rand() % (6 + 1 - 4) + 4;
+    //int topAnglesBlock = (rand() % (3+1-2)+3);
+    int leafs = 5*5*2 - 2 + 3*3*2; //+ topAnglesBlock;
+
+    obj->objCount = logs + leafs;
+    obj->obj = malloc(sizeof(TObject) * obj->objCount);
+
+    int x = rand() % mapW;
+    int y = rand() % mapH;
+    float z = mapGetHeight(x+0.5, y+0.5) - 0.5;
+
+    for (int i =0; i < logs; i++)
+    {
+        obj->obj[i].type = 1;
+        obj->obj[i].x = x;
+        obj->obj[i].y = y;
+        obj->obj[i].z = z+i;
+    }
+
+    int position = logs;
+    for (int k =0; k< 2; k++)
+    {
+        for (int i= x-2; i<=x+2; i++)
+        {
+            for (int j= y-2; j<=y+2; j++)
+            {
+                if((i != x)||(j != y))
+                {
+                    obj->obj[position].type = 2;
+                    obj->obj[position].x = i;
+                    obj->obj[position].y = j;
+                    obj->obj[position].z = z + logs - 2 + k;
+                    position++;
+                }
+            }
+        }
+    }
+
+    printf("x = %d; y = %d; z =%f\n",x,y,z);
+    for (int k =0; k< 2; k++)
+    {
+        for (int i= x-1; i<=x+1; i++)
+        {
+            for (int j= y-1; j<=y+1; j++)
+            {
+                if(k!=1)
+                {
+                    obj->obj[position].type = 2;
+                    obj->obj[position].x = i;
+                    obj->obj[position].y = j;
+                    obj->obj[position].z = z + logs + k;
+                }
+                else
+                {
+                    if(
+                    !(i==x-1 && j==y-1) &&
+                    !(i==x-1 && j==y+1) &&
+                    !(i==x+1 && j==y-1) &&
+                    !(i==x+1 && j==y+1))
+                    {
+                        printf("k = %d,i = %d,j = %d\n",k,i,j);
+                        obj->obj[position].type = 2;
+                        obj->obj[position].x = i;
+                        obj->obj[position].y = j;
+                        obj->obj[position].z = z + logs + k;
+                    }
+                }
+                position++;
+            }
+        }
+    }
+
+}
+
+void paintTrees(TWood wood){
+    glEnable(GL_TEXTURE_2D);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+        glVertexPointer(3, GL_FLOAT, 0, cubeWood);
+        if (ShowMask)
+            glColor3f(0,0,0);
+        else
+            glColor3f(0.7,0.7,0.7);
+        glNormal3f(0,0,1);
+
+        glBindTexture(GL_TEXTURE_2D, wood.type);
+        for(int j=0; j<wood.objCount; j++)
+        {
+            if(wood.obj[j].type == 1) glTexCoordPointer(2, GL_FLOAT, 0, cubeUVlog);
+            else glTexCoordPointer(2, GL_FLOAT, 0, cubeUVleaf);
+            glPushMatrix();
+                glTranslatef(wood.obj[j].x, wood.obj[j].y, wood.obj[j].z);
+                glDrawElements(GL_TRIANGLES, cubeIndCount, GL_UNSIGNED_INT, cubeInd);
+            glPopMatrix();
+        }
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    glDisableClientState(GL_VERTEX_ARRAY);
 }
 
 //!-----------------------------------------------------TEXTURES
-
 void loadTexture(char *filename, unsigned int *target){
     int width, height, count;
     unsigned char *data = stbi_load(filename, &width, &height, &count, 0);
@@ -65,22 +172,12 @@ void CalcNormals(TCell a, TCell b, TCell c, TCell *n){
     n->z /= wrki;
 }
 
-//!-----------------------------------------------------PRESET
-BOOL ShowMask = FALSE;
-TCell map[mapW][mapH];
-TUV mapUV[mapW][mapH];
-TCell mapNormals[mapW][mapH];
-GLuint mapIndexes[mapW-1][mapH-1][6];
-int mapIndexesCount = sizeof(mapIndexes)/sizeof(GLuint);
-
 //!-----------------------------------------------------MANIPULATOR
-void playerMove();
 void gameMove()
 {
     playerMove();
 }
 
-float mapGetHeight(float x, float y);
 void playerMove()
 {
     if (GetForegroundWindow() != hwnd) return;
@@ -112,12 +209,11 @@ float mapGetHeight(float x, float y)
 
     int cX = (int)x;
     int cY = (int)y;
-        printf("x,y: %f%,%f, cx,cy:%f,%f\n", x, y, cX, cY);
 
     float h1 = (1-(x-cX))*map[cX][cY].z + (x-cX)*map[cX+1][cY].z;
     float h2 = (1-(x-cX))*map[cX][cY+1].z + (x-cX)*map[cX+1][cY+1].z;
     float h = (1-(y-cY))*h1 + (y-cY)*h2;
-        printf("camera[h1,h2,h]: %f%,%f,%f\n", h1, h2, h);
+
     return h;
 }
 
@@ -133,7 +229,7 @@ void initMap()
     glEnable(GL_TEXTURE_2D);
 
     glEnable(GL_ALPHA_TEST);
-    glAlphaFunc(GL_GREATER,0.99);
+    glAlphaFunc(GL_GREATER,0.5);
 
     loadTexture("textures/flower.png", &texFlower);
     loadTexture("textures/flower2.png", &texFlower2);
@@ -142,6 +238,7 @@ void initMap()
     loadTexture("textures/trava.png", &texGrass);
     loadTexture("textures/tree.png", &texTree);
     loadTexture("textures/tree2.png", &texTree2);
+    loadTexture("textures/birch.png", &texBirch);
 
     for (int i=0; i<mapW; i++){
         int pos = i*mapH;
@@ -182,8 +279,10 @@ void initMap()
 //init plants
     int grassCounterSize = 2000;
     int flowersCounterSize = 500;
-    int treesCounterSize = 250;
-    initPlants(grassCounterSize, flowersCounterSize, treesCounterSize);
+    initPlants(grassCounterSize, flowersCounterSize);
+//init woods
+    int woodSize = 50;
+    initWoods(woodSize);
 }
 
 //buff the map with hill
@@ -204,15 +303,12 @@ void mapCreateHill(int posX, int posY, int radius, int heightExtremum)
 }
 
 //!-----------------------------------------------------OBJECTS
-void initPlants(int grassCounterSize, int flowersCounterSize, int treesCounterSize){
+void initPlants(int grassCounterSize, int flowersCounterSize){
     grassSize = grassCounterSize;
     grass = realloc(grass, sizeof(*grass)*grassSize);
 
     flowersSize = flowersCounterSize;
     flowers = realloc(flowers, sizeof(*flowers)*flowersSize);
-
-    treesSize = treesCounterSize;
-    trees = realloc(trees, sizeof(*trees)*treesSize);
 
     for(int i = 0; i< grassSize + flowersSize + treesSize; i++){
         if (i<grassCounterSize)
@@ -238,22 +334,6 @@ void initPlants(int grassCounterSize, int flowersCounterSize, int treesCounterSi
             flowers[k_iter].x = rand() % mapW;
             flowers[k_iter].y = rand() % mapH;
             flowers[k_iter].z = mapGetHeight(flowers[k_iter].x, flowers[k_iter].y);
-        }
-        else
-        {
-            int k_iter= i-grassSize-flowersCounterSize;
-            if (i%2==0)
-            {
-                trees[k_iter].type = texTree;
-                trees[k_iter].scale = 4 + (rand() %14);
-            }else if (treesSize/2<i<treesSize){
-                trees[k_iter].type = texTree2;
-                trees[k_iter].scale = 4 + (rand() %14);
-            }
-
-            trees[k_iter].x = rand() % mapW;
-            trees[k_iter].y = rand() % mapH;
-            trees[k_iter].z = mapGetHeight(trees[k_iter].x, trees[k_iter].y);
         }
     }
 }
@@ -326,6 +406,11 @@ void gameShow()
         paintPlants(grass, grassSize);
         paintPlants(trees, treesSize);
         paintPlants(flowers, flowersSize);
+
+        for(int i=0; i<woodsSize; i++)
+        {
+            paintTrees(woods[i]);
+        }
     glPopMatrix();
 }
 
