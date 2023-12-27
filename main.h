@@ -1,12 +1,23 @@
 #ifndef MAIN_H_INCLUDED
 #define MAIN_H_INCLUDED
 
-// map size
-#define mapW 100
+#include <windows.h>
+#include <gl/gl.h>
+#include <math.h>
+#include <stdio.h>
+
+#define mapW 100 //map size
 #define mapH 100
 
-//count enemies
-#define enemyCnt 40
+#define enemyCnt 40 //count enemies
+
+#define objectListCount 255
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "../stb_image/stb_image.h"
+
+#include "camera/camera_module.h"
+#include "trees.c"
 
 int width, height;
 
@@ -19,7 +30,6 @@ BOOL isCoordInMap(float x, float y)
 }
 
 //!-----------------------------------------------------TEXTURE INDEXES
-
 unsigned int texTerain,
     texGrass,
     texFlower,
@@ -30,7 +40,6 @@ unsigned int texTerain,
     texBirch;
 
 //!-----------------------------------------------------STRUCTURS
-
 struct {
     float vertex[24];
     GLuint index[36];
@@ -47,7 +56,6 @@ typedef struct {
     int type;
     float scale;
 }TObject;
-
 
 typedef struct {
     float r,g,b;
@@ -66,6 +74,11 @@ typedef struct {
     int objCount;
     int type;
 }TWood;
+
+typedef struct {
+    int plantsArrayIndex;
+    int colorIndex;
+}TSelectObject;
 
 //!-----------------------------------------------------PLANTS PRESETS
 float cubeWood[] = {0,0,0, 1,0,0, 1,1,0, 0,1,0,
@@ -94,31 +107,31 @@ int cubeIndCount = sizeof(cubeInd)/sizeof(GLuint);
 
 //!-----------------------------------------------------WOODS PRESETS
 float object[] = {-0.5,0,0,
-                 0.5,0,0,
-                 0.5,0,1,
-                 -0.5,0,1,
-                 0,-0.5,0,
-                 0,0.5,0,
-                 0,0.5,1,
-                 0,-0.5,1};
+                  0.5,0,0,
+                  0.5,0,1,
+                  -0.5,0,1,
+                  0,-0.5,0,
+                  0,0.5,0,
+                  0,0.5,1,
+                  0,-0.5,1};
 
 float objectUV[] = {0,1,
-                   1,1,
-                   1,0,
-                   0,0,
-                   0,1,
-                   1,1,
-                   1,0,
-                   0,0};
+                    1,1,
+                    1,0,
+                    0,0,
+                    0,1,
+                    1,1,
+                    1,0,
+                    0,0};
 
 GLuint objectIndexes[] = {0,1,2,
-                     2,3,0,
-                     4,5,6,
-                     6,7,4};
+                          2,3,0,
+                          4,5,6,
+                          6,7,4};
 
 int objectIndexesCount = sizeof(objectIndexes)/sizeof(GLuint);
 
-//Grass arrays
+//!-----------------------------------------------------PLANTS ARRAYS
 TObject *grass = NULL;
 int grassSize = 0;
 
@@ -131,10 +144,23 @@ int treesSize = 0;
 TWood *woods = NULL;
 int woodsSize = 0;
 
-//main methods
+TSelectObject selectArray[objectListCount];
+int selectArrayCount = 0;
+
+//sun
+float sun[] = {-1,-1,0,
+               1,-1,0,
+               1,1,0,
+               -1,1,0};
+
+//!-----------------------------------------------------MAIN METHODS
+LRESULT CALLBACK WindowProc(HWND, UINT, WPARAM, LPARAM);
+void EnableOpenGL(HWND hwnd, HDC*, HGLRC*);
+void DisableOpenGL(HWND, HDC, HGLRC);
 void playerMove();
-float mapGetHeight(float x, float y);
 void initPlants(int grassCounterSize, int flowersCounterSize);
 void creatTrees(TWood *obj, int type);
+float mapGetHeight(float x, float y);
+void mapCreateHill(int posX, int posY, int radius, int heightExtremum);
 
 #endif // MAIN_H_INCLUDED

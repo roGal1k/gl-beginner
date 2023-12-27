@@ -1,16 +1,4 @@
-#include <windows.h>
-#include <gl/gl.h>
-#include <math.h>
-#include <stdio.h>
-
-#include "camera/camera_module.h"
 #include "main.h"
-#define STB_IMAGE_IMPLEMENTATION
-#include "../stb_image/stb_image.h"
-
-LRESULT CALLBACK WindowProc(HWND, UINT, WPARAM, LPARAM);
-void EnableOpenGL(HWND hwnd, HDC*, HGLRC*);
-void DisableOpenGL(HWND, HDC, HGLRC);
 
 //!-----------------------------------------------------PRESETS
 BOOL ShowMask = FALSE;
@@ -34,8 +22,7 @@ void initWoods(int woodSize){
 void creatTrees(TWood *obj, int type){
     obj->type = type;
     int logs = rand() % (6 + 1 - 4) + 4;
-    //int topAnglesBlock = (rand() % (3+1-2)+3);
-    int leafs = 5*5*2 - 2 + 3*3*2; //+ topAnglesBlock;
+    int leafs = 5*5*2 - 2 + 3*3*2;
 
     obj->objCount = logs + leafs;
     obj->obj = malloc(sizeof(TObject) * obj->objCount);
@@ -71,7 +58,6 @@ void creatTrees(TWood *obj, int type){
         }
     }
 
-    printf("x = %d; y = %d; z =%f\n",x,y,z);
     for (int k =0; k< 2; k++)
     {
         for (int i= x-1; i<=x+1; i++)
@@ -93,7 +79,6 @@ void creatTrees(TWood *obj, int type){
                     !(i==x+1 && j==y-1) &&
                     !(i==x+1 && j==y+1))
                     {
-                        printf("k = %d,i = %d,j = %d\n",k,i,j);
                         obj->obj[position].type = 2;
                         obj->obj[position].x = i;
                         obj->obj[position].y = j;
@@ -218,8 +203,6 @@ float mapGetHeight(float x, float y)
 }
 
 //!-----------------------------------------------------MAP
-void mapCreateHill(int posX, int posY, int radius, int heightExtremum);
-
 void initMap()
 {
     glEnable(GL_LIGHTING);
@@ -257,7 +240,7 @@ void initMap()
             };
             map[i][j].x = i;
             map[i][j].y = j;
-            map[i][j].z = (rand() %10) *0.05;
+            map[i][j].z = (rand() %10) *0.02;
 
             mapUV[i][j].u = i;
             mapUV[i][j].v = j;
@@ -276,11 +259,11 @@ void initMap()
         }
     }
 
-//init plants
+//initialization plants
     int grassCounterSize = 2000;
     int flowersCounterSize = 500;
     initPlants(grassCounterSize, flowersCounterSize);
-//init woods
+//initialization woods
     int woodSize = 50;
     initWoods(woodSize);
 }
@@ -289,6 +272,7 @@ void initMap()
 void mapCreateHill(int posX, int posY, int radius, int heightExtremum)
 {
     if(radius==0 || (posX-radius)<0 || (posY-radius)<0) return;
+
     for(int i= posX - radius; i <= posX + radius; i++){
         for(int j = posY -radius; j <= posY + radius; j++){
             if(isCoordInMap(i,j)){
@@ -373,17 +357,56 @@ void initGame()
 
 void gameShow()
 {
+    static float alfa = 0;
+    alfa += 0.25;
+    if(alfa > 180) alfa -= 360;
+
     gameMove();
 
+    #define abs(a) ((a) > 0 ? (a) : -(a))
+    float kcc = 1 - (abs(alfa)/180);
+
+    #define zakat 60
+    float nigthmareKoeef = 90 - abs(alfa);
+    nigthmareKoeef = (zakat - abs(nigthmareKoeef));
+    nigthmareKoeef = nigthmareKoeef < 0 ? 0 : nigthmareKoeef/zakat;
+
     if(ShowMask) glClearColor(0,0,0,0);
-    else glClearColor(0.6, 0.8, 1, 0);
+    else glClearColor(0.6 * kcc, 0.8 * kcc, 1 * kcc, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glPushMatrix();
+        glPushMatrix();
+            glRotatef(-camera.xRot, 1, 0, 0);
+            glRotatef(-camera.zRot, 0, 0, 1);
+            glRotatef(alfa, 0, 1,0);
+            glTranslatef(0,0,20);
+
+            glDisable(GL_DEPTH_TEST);
+            glDisable(GL_TEXTURE_2D);
+                glColor3f(1, 1 - nigthmareKoeef*0.4, 1-0.6*nigthmareKoeef);
+                glEnableClientState(GL_VERTEX_ARRAY);
+                    glVertexPointer(3, GL_FLOAT, 0, sun);
+                    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+                glDisableClientState(GL_VERTEX_ARRAY);
+            glEnable(GL_TEXTURE_2D);
+            glEnable(GL_DEPTH_TEST);
+        glPopMatrix();
+
         applyCamera();
 
-        GLfloat position[] = {1,0,2,0};
-        glLightfv(GL_LIGHT0, GL_POSITION, position);
+        //world lightning
+        glPushMatrix();
+            glRotatef(alfa, 0, 1,0);
+            GLfloat position[] = {0,0,1,0};
+            glLightfv(GL_LIGHT0, GL_POSITION, position);
+            float lightIntensive[] = {1+nigthmareKoeef*1.5,1,1,0};
+            glLightfv(GL_LIGHT0,GL_DIFFUSE, lightIntensive);
+
+            float clr = kcc*0.15 +0.15;
+            float intensiveBackgroundLightning[] = {clr, clr, clr, 0};
+            glLightModelfv(GL_LIGHT_MODEL_AMBIENT, intensiveBackgroundLightning);
+        glPopMatrix();
 
         glEnableClientState(GL_VERTEX_ARRAY);
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);

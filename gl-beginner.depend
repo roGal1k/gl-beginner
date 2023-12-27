@@ -41,3 +41,9 @@
 
 1703490191 c:\users\galik\documents\git\gl-beginner\main.h
 
+1703671498 source:c:\users\galik\documents\git\gl-beginner\trees.c
+	<windows.h>
+	<gl/gl.h>
+	<math.h>
+	<stdio.h>
+
