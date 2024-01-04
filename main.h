@@ -75,16 +75,22 @@ typedef struct {
     int type;
 }TWood;
 
-typedef struct {
-    int plantsArrayIndex;
-    int colorIndex;
+typedef struct {    //array selected object
+    int plantsArrayIndex; // number mask in grass array
+    int colorIndex;     // default object color
 }TSelectObject;
 
+typedef struct {
+    TObject *obj;
+    float dx,dy,dz;
+    int cnt;
+} TAnim;
+
 //!-----------------------------------------------------PLANTS PRESETS
-float cubeWood[] = {0,0,0, 1,0,0, 1,1,0, 0,1,0,
-                    0,0,1, 1,0,1, 1,1,1, 0,1,1,
-                    0,0,0, 1,0,0, 1,1,0, 0,1,0,
-                    0,0,1, 1,0,1, 1,1,1, 0,1,1
+float cubeWood[] =   {0,0,0, 1,0,0, 1,1,0, 0,1,0,
+                      0,0,1, 1,0,1, 1,1,1, 0,1,1,
+                      0,0,0, 1,0,0, 1,1,0, 0,1,0,
+                      0,0,1, 1,0,1, 1,1,1, 0,1,1
 };
 
 float cubeUVlog[] =   {0.5,0.5, 1,0.5, 1,0, 0.5,0,
@@ -99,8 +105,8 @@ float cubeUVleaf[] =   {0,1, 0.5,1, 0.5,0.5, 0,0.5,
                         0,1, 0.5,1, 0,1, 0.5,1
 };
 
-GLuint cubeInd[] = {0,1,2, 2,3,0, 4,5,6, 6,7,4, 8,9,13, 13,12,8,
-                    9,10,14, 14,13,9, 10,11,15, 15,14,10, 11,8,12, 12,15,11
+GLuint cubeInd[] =  {0,1,2, 2,3,0, 4,5,6, 6,7,4, 8,9,13, 13,12,8,
+                     9,10,14, 14,13,9, 10,11,15, 15,14,10, 11,8,12, 12,15,11
 };
 
 int cubeIndCount = sizeof(cubeInd)/sizeof(GLuint);
@@ -141,6 +147,8 @@ int flowersSize = 0;
 TObject *trees = NULL;
 int treesSize = 0;
 
+TAnim animation = {0,0,0,0,0};
+
 TWood *woods = NULL;
 int woodsSize = 0;
 
@@ -155,12 +163,15 @@ float sun[] = {-1,-1,0,
 
 //!-----------------------------------------------------MAIN METHODS
 LRESULT CALLBACK WindowProc(HWND, UINT, WPARAM, LPARAM);
+
 void EnableOpenGL(HWND hwnd, HDC*, HGLRC*);
 void DisableOpenGL(HWND, HDC, HGLRC);
+
 void playerMove();
 void initPlants(int grassCounterSize, int flowersCounterSize);
 void creatTrees(TWood *obj, int type);
-float mapGetHeight(float x, float y);
 void mapCreateHill(int posX, int posY, int radius, int heightExtremum);
+
+float mapGetHeight(float x, float y);
 
 #endif // MAIN_H_INCLUDED

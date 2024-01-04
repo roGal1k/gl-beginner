@@ -1,12 +1,6 @@
 # depslib dependency file v1.0
-1703497186 source:c:\users\galik\documents\git\gl-beginner\main.c
-	<windows.h>
-	<gl/gl.h>
-	<math.h>
-	<stdio.h>
-	"camera/camera_module.h"
+1704207921 source:c:\users\galik\documents\git\gl-beginner\main.c
 	"main.h"
-	"../stb_image/stb_image.h"
 
 1701618001 source:c:\users\galik\documents\git\gl-beginner\camera_module.c
 	"camera_module.h"
@@ -39,9 +33,22 @@
 	<intrin.h>
 	<arm_neon.h>
 
-1703490191 c:\users\galik\documents\git\gl-beginner\main.h
+1704206884 c:\users\galik\documents\git\gl-beginner\main.h
+	<windows.h>
+	<gl/gl.h>
+	<math.h>
+	<stdio.h>
+	"../stb_image/stb_image.h"
+	"camera/camera_module.h"
+	"trees.c"
 
 1703671498 source:c:\users\galik\documents\git\gl-beginner\trees.c
+	<windows.h>
+	<gl/gl.h>
+	<math.h>
+	<stdio.h>
+
+1703671498 c:\users\galik\documents\git\gl-beginner\trees.c
 	<windows.h>
 	<gl/gl.h>
 	<math.h>

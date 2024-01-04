@@ -1,12 +1,52 @@
 #include "main.h"
 
 //!-----------------------------------------------------PRESETS
-BOOL ShowMask = FALSE;
+BOOL selectMode = FALSE;
 TCell map[mapW][mapH];
 TUV mapUV[mapW][mapH];
 TCell mapNormals[mapW][mapH];
 GLuint mapIndexes[mapW-1][mapH-1][6];
 int mapIndexesCount = sizeof(mapIndexes)/sizeof(GLuint);
+
+//!-----------------------------------------------------HELPERS
+float mapGetHeight(float x, float y)
+{
+    if(!isCoordInMap(x,y)) return 0;
+
+    int cX = (int)x;
+    int cY = (int)y;
+
+    float h1 = (1-(x-cX))*map[cX][cY].z + (x-cX)*map[cX+1][cY].z;
+    float h2 = (1-(x-cX))*map[cX][cY+1].z + (x-cX)*map[cX+1][cY+1].z;
+    float h = (1-(y-cY))*h1 + (y-cY)*h2;
+
+    return h;
+}
+
+//!-----------------------------------------------------ANIMATION
+void AnimSet(TAnim *animation, TObject *obj){
+    if (animation->obj != NULL) return;
+    animation->obj = obj;
+    animation->cnt = 10;
+    animation->dx = (camera.x - obj->x) / (float) animation->cnt;
+    animation->dy = (camera.y - obj->y) / (float) animation->cnt;
+    animation->dz = (camera.z - obj->scale - 0.2 - obj->z) / (float) animation->cnt;
+}
+
+void AnimMove(TAnim *animation){
+    if(animation->obj != NULL){
+        animation->obj->x += animation->dx;
+        animation->obj->y += animation->dy;
+        animation->obj->z += animation->dz;
+        animation->cnt--;
+        if(animation->cnt <1){
+            animation->obj->x = rand() % mapW;
+            animation->obj->y = rand() % mapH;
+            animation->obj->z = mapGetHeight(animation->obj->x, animation->obj->y);
+            animation->obj = NULL;
+        }
+    }
+}
 
 //!-----------------------------------------------------TREES
 void initWoods(int woodSize){
@@ -98,10 +138,7 @@ void paintTrees(TWood wood){
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
         glVertexPointer(3, GL_FLOAT, 0, cubeWood);
-        if (ShowMask)
-            glColor3f(0,0,0);
-        else
-            glColor3f(0.7,0.7,0.7);
+        glColor3f(0.7,0.7,0.7);
         glNormal3f(0,0,1);
 
         glBindTexture(GL_TEXTURE_2D, wood.type);
@@ -114,6 +151,7 @@ void paintTrees(TWood wood){
                 glDrawElements(GL_TRIANGLES, cubeIndCount, GL_UNSIGNED_INT, cubeInd);
             glPopMatrix();
         }
+
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
     glDisableClientState(GL_VERTEX_ARRAY);
 }
@@ -132,7 +170,6 @@ void loadTexture(char *filename, unsigned int *target){
                                     0, count == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, data);
     glBindTexture(GL_TEXTURE_2D, 0);
     stbi_image_free(data);
-
 }
 
 //!-----------------------------------------------------NORMALIZE VECTOR
@@ -188,18 +225,27 @@ void playerMove()
     cameraAutoMoveByMouse(400, 300, speedCam);
 }
 
-float mapGetHeight(float x, float y)
+void playerTaking(HWND hwnd)
 {
-    if(!isCoordInMap(x,y)) return 0;
+    selectMode = TRUE;
+    gameShow();
+    selectMode = FALSE;
 
-    int cX = (int)x;
-    int cY = (int)y;
-
-    float h1 = (1-(x-cX))*map[cX][cY].z + (x-cX)*map[cX+1][cY].z;
-    float h2 = (1-(x-cX))*map[cX][cY+1].z + (x-cX)*map[cX+1][cY+1].z;
-    float h = (1-(y-cY))*h1 + (y-cY)*h2;
-
-    return h;
+    RECT rct;
+    GLubyte color[3];
+    GetClientRect(hwnd, &rct);
+    glReadPixels(rct.right/2.0, rct.bottom /2.0, 1,1, GL_RGB,
+                 GL_UNSIGNED_BYTE, color);
+    if(color[0]>0)
+    {
+        for(int i = 0; i < selectArrayCount; i++)
+        {
+            if(selectArray[i].colorIndex == color[0])
+            {
+                AnimSet(&animation, grass + selectArray[i].plantsArrayIndex);
+            }
+        }
+    }
 }
 
 //!-----------------------------------------------------MAP
@@ -252,7 +298,6 @@ void initMap()
         mapCreateHill(rand()%mapW, rand()%mapH, (int)((rand() % mapW/20 )* pow(heightHill,2)), heightHill);
     }
 
-
     for (int i=0; i<mapW-1; i++){
         for (int j=0; j<mapH-1; j++){
             CalcNormals(map[i][j], map[i+1][j], map[i][j+1], &mapNormals[i][j]);
@@ -263,6 +308,7 @@ void initMap()
     int grassCounterSize = 2000;
     int flowersCounterSize = 500;
     initPlants(grassCounterSize, flowersCounterSize);
+
 //initialization woods
     int woodSize = 50;
     initWoods(woodSize);
@@ -328,12 +374,28 @@ void paintPlants(TObject *obj, int size){
         glVertexPointer(3, GL_FLOAT, 0, object);
         glTexCoordPointer(2, GL_FLOAT, 0, objectUV);
         glNormal3f(0,0,1);
-        if (ShowMask)
-            glColor3f(0,0,0);
-        else
-            glColor3f(0.7,0.7,0.7);
+
+        int selectColor = 1;
+
         for (int i=0; i < size; i++)
         {
+            static int radius =10;
+            if (selectMode)
+            {
+                if ((obj[i].x > camera.x - radius) &&
+                    (obj[i].x < camera.x + radius) &&
+                    (obj[i].y > camera.y - radius) &&
+                    (obj[i].y < camera.y + radius))
+                {
+                    glColor3ub(selectColor,0,0);
+                    selectArray[selectArrayCount].colorIndex = selectColor;
+                    selectArray[selectArrayCount].plantsArrayIndex = i;
+                    selectArrayCount++;
+                    selectColor++;
+                    if (selectColor >=255) break;
+                }
+                else continue;
+            }
             glBindTexture(GL_TEXTURE_2D, obj[i].type);
             glPushMatrix();
                 glTranslatef(obj[i].x, obj[i].y,  obj[i].z);
@@ -358,7 +420,7 @@ void initGame()
 void gameShow()
 {
     static float alfa = 0;
-    alfa += 0.25;
+    alfa += 0.125;
     if(alfa > 180) alfa -= 360;
 
     gameMove();
@@ -371,31 +433,46 @@ void gameShow()
     nigthmareKoeef = (zakat - abs(nigthmareKoeef));
     nigthmareKoeef = nigthmareKoeef < 0 ? 0 : nigthmareKoeef/zakat;
 
-    if(ShowMask) glClearColor(0,0,0,0);
+    if(selectMode) glClearColor(0,0,0,0);
     else glClearColor(0.6 * kcc, 0.8 * kcc, 1 * kcc, 0);
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glPushMatrix();
-        glPushMatrix();
-            glRotatef(-camera.xRot, 1, 0, 0);
-            glRotatef(-camera.zRot, 0, 0, 1);
-            glRotatef(alfa, 0, 1,0);
-            glTranslatef(0,0,20);
+    if(selectMode){
+        glDisable(GL_TEXTURE_2D);
+        glDisable(GL_LIGHTING);
+    }
+    else{
+        glEnable(GL_LIGHTING);
+        glEnable(GL_TEXTURE_2D);
+    }
 
-            glDisable(GL_DEPTH_TEST);
-            glDisable(GL_TEXTURE_2D);
-                glColor3f(1, 1 - nigthmareKoeef*0.4, 1-0.6*nigthmareKoeef);
-                glEnableClientState(GL_VERTEX_ARRAY);
-                    glVertexPointer(3, GL_FLOAT, 0, sun);
-                    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-                glDisableClientState(GL_VERTEX_ARRAY);
-            glEnable(GL_TEXTURE_2D);
-            glEnable(GL_DEPTH_TEST);
-        glPopMatrix();
+    AnimMove(&animation);
+
+    glPushMatrix();
+        if(!selectMode) // paint sun
+        {
+            glPushMatrix();
+                glRotatef(-camera.xRot, 1, 0, 0);
+                glRotatef(-camera.zRot, 0, 0, 1);
+                glRotatef(alfa, 0, 1,0);
+                glTranslatef(0,0,20);
+
+                glDisable(GL_DEPTH_TEST);
+                glDisable(GL_TEXTURE_2D);
+                    glColor3f(1, 1 - nigthmareKoeef*0.4, 1-0.6*nigthmareKoeef);
+                    glEnableClientState(GL_VERTEX_ARRAY);
+                        glVertexPointer(3, GL_FLOAT, 0, sun);
+                        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+                    glDisableClientState(GL_VERTEX_ARRAY);
+                glEnable(GL_TEXTURE_2D);
+                glEnable(GL_DEPTH_TEST);
+            glPopMatrix();
+        }
 
         applyCamera();
 
-        //world lightning
+            //world lightning
         glPushMatrix();
             glRotatef(alfa, 0, 1,0);
             GLfloat position[] = {0,0,1,0};
@@ -408,32 +485,38 @@ void gameShow()
             glLightModelfv(GL_LIGHT_MODEL_AMBIENT, intensiveBackgroundLightning);
         glPopMatrix();
 
-        glEnableClientState(GL_VERTEX_ARRAY);
-        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-        glEnableClientState(GL_NORMAL_ARRAY);
-        glVertexPointer(3, GL_FLOAT, 0, map);
-        glTexCoordPointer(2, GL_FLOAT, 0, mapUV);
-        glNormalPointer(GL_FLOAT, 0, mapNormals);
-        glPushMatrix();
-            if (ShowMask)
-                glColor3f(0,0,0);
-            else
-                glColor3f(0.7,0.7,0.7);
-            glBindTexture(GL_TEXTURE_2D, texTerain);
-            glDrawElements(GL_TRIANGLES, mapIndexesCount, GL_UNSIGNED_INT, mapIndexes);
-        glPopMatrix();
-        glDisableClientState(GL_NORMAL_ARRAY);
-        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-        glDisableClientState(GL_VERTEX_ARRAY);
+        if(!selectMode){ // pain terrain
+            glEnableClientState(GL_VERTEX_ARRAY);
+            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+            glEnableClientState(GL_NORMAL_ARRAY);
+                glVertexPointer(3, GL_FLOAT, 0, map);
+                glTexCoordPointer(2, GL_FLOAT, 0, mapUV);
+                glNormalPointer(GL_FLOAT, 0, mapNormals);
 
+                glPushMatrix();
+                    glColor3f(0.7,0.7,0.7);
+                    glBindTexture(GL_TEXTURE_2D, texTerain);
+                    glDrawElements(GL_TRIANGLES, mapIndexesCount, GL_UNSIGNED_INT, mapIndexes);
+
+                glPopMatrix();
+            glDisableClientState(GL_NORMAL_ARRAY);
+            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+            glDisableClientState(GL_VERTEX_ARRAY);
+        }
+
+        if(!selectMode) // paint trees
+        {
+            for(int i=0; i<woodsSize; i++)
+            {
+                paintTrees(woods[i]);
+            }
+        }
+
+        selectArrayCount = 0;
         paintPlants(grass, grassSize);
         paintPlants(trees, treesSize);
         paintPlants(flowers, flowersSize);
 
-        for(int i=0; i<woodsSize; i++)
-        {
-            paintTrees(woods[i]);
-        }
     glPopMatrix();
 }
 
@@ -541,6 +624,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         break;
 
         case WM_LBUTTONDOWN:
+            playerTaking(hwnd);
         break;
 
         case WM_SETCURSOR:
