@@ -242,7 +242,7 @@ void playerTaking(HWND hwnd)
         {
             if(selectArray[i].colorIndex == color[0])
             {
-                AnimSet(&animation, grass + selectArray[i].plantsArrayIndex);
+                AnimSet(&animation, nature + selectArray[i].plantsArrayIndex);
             }
         }
     }
@@ -260,13 +260,11 @@ void initMap()
     glEnable(GL_ALPHA_TEST);
     glAlphaFunc(GL_GREATER,0.5);
 
-    loadTexture("textures/flower.png", &texFlower);
-    loadTexture("textures/flower2.png", &texFlower2);
-    loadTexture("textures/grib.png", &texMashroom);
+    loadTexture("textures/poppy.png", &texPoppy);
+    loadTexture("textures/chamomile.png", &texChamomile);
+    loadTexture("textures/toadstool.png", &texToadstool);
     loadTexture("textures/pole.png", &texTerain);
-    loadTexture("textures/trava.png", &texGrass);
-    loadTexture("textures/tree.png", &texTree);
-    loadTexture("textures/tree2.png", &texTree2);
+    loadTexture("textures/grass.png", &texGrass);
     loadTexture("textures/birch.png", &texBirch);
 
     for (int i=0; i<mapW; i++){
@@ -307,7 +305,8 @@ void initMap()
 //initialization plants
     int grassCounterSize = 2000;
     int flowersCounterSize = 500;
-    initPlants(grassCounterSize, flowersCounterSize);
+    int mashroomsCounterSize = 300;
+    initPlants(grassCounterSize, flowersCounterSize, mashroomsCounterSize);
 
 //initialization woods
     int woodSize = 50;
@@ -333,37 +332,45 @@ void mapCreateHill(int posX, int posY, int radius, int heightExtremum)
 }
 
 //!-----------------------------------------------------OBJECTS
-void initPlants(int grassCounterSize, int flowersCounterSize){
-    grassSize = grassCounterSize;
-    grass = realloc(grass, sizeof(*grass)*grassSize);
-
+void initPlants(int grassCounterSize, int flowersCounterSize, int mashroomsCounterSize){
     flowersSize = flowersCounterSize;
-    flowers = realloc(flowers, sizeof(*flowers)*flowersSize);
+    grassSize = grassCounterSize;
+    mashroomsSize = mashroomsCounterSize;
+    nature = realloc(nature, sizeof(*nature)*(grassSize + flowersSize + mashroomsSize));
 
-    for(int i = 0; i< grassSize + flowersSize + treesSize; i++){
+    for(int i = 0; i< grassSize + flowersSize + mashroomsSize; i++){
         if (i<grassCounterSize)
         {
-            grass[i].type = texGrass;
-            grass[i].scale = 1 ;
-            grass[i].x = rand() % mapW;
-            grass[i].y = rand() % mapH;
-            grass[i].z = mapGetHeight(grass[i].x, grass[i].y);
+            nature[i].type = texGrass;
+            nature[i].scale = 1 ;
+            nature[i].x = rand() % mapW;
+            nature[i].y = rand() % mapH;
+            nature[i].z = mapGetHeight(nature[i].x, nature[i].y);
         }
-        else if (i<flowersCounterSize+grassSize)
+        else if (i<flowersCounterSize+grassCounterSize)
         {
             int k_iter= i-grassSize;
             if(i%2==0){
-                flowers[k_iter].type = texFlower;
-                flowers[k_iter].scale = 0.8;
+                nature[k_iter].type = texPoppy;
+                nature[k_iter].scale = 0.7;
             }
             else
             {
-                flowers[k_iter].type = texFlower2;
-                flowers[k_iter].scale = 0.8;
+                nature[k_iter].type = texChamomile;
+                nature[k_iter].scale = 0.7;
             }
-            flowers[k_iter].x = rand() % mapW;
-            flowers[k_iter].y = rand() % mapH;
-            flowers[k_iter].z = mapGetHeight(flowers[k_iter].x, flowers[k_iter].y);
+            nature[k_iter].x = rand() % mapW;
+            nature[k_iter].y = rand() % mapH;
+            nature[k_iter].z = mapGetHeight(nature[k_iter].x, nature[k_iter].y);
+        }
+        else if (i<flowersCounterSize+grassCounterSize+ mashroomsCounterSize)
+        {
+            int k_iter= i-grassSize-flowersSize;
+            nature[k_iter].type = texToadstool;
+            nature[k_iter].scale = 0.4;
+            nature[k_iter].x = rand() % mapW;
+            nature[k_iter].y = rand() % mapH;
+            nature[k_iter].z = mapGetHeight(nature[k_iter].x, nature[k_iter].y);
         }
     }
 }
@@ -513,10 +520,7 @@ void gameShow()
         }
 
         selectArrayCount = 0;
-        paintPlants(grass, grassSize);
-        paintPlants(trees, treesSize);
-        paintPlants(flowers, flowersSize);
-
+        paintPlants(nature, grassSize + flowersSize + mashroomsSize);
     glPopMatrix();
 }
 

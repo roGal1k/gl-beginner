@@ -35,5 +35,4 @@ void windResize(int x, int y){
     glFrustum(-k*sz, k*sz, -sz, sz, sz*2, 1000);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-
 };

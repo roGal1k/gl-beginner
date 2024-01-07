@@ -32,11 +32,9 @@ BOOL isCoordInMap(float x, float y)
 //!-----------------------------------------------------TEXTURE INDEXES
 unsigned int texTerain,
     texGrass,
-    texFlower,
-    texFlower2,
-    texMashroom,
-    texTree,
-    texTree2,
+    texPoppy,
+    texChamomile,
+    texToadstool,
     texBirch;
 
 //!-----------------------------------------------------STRUCTURS
@@ -138,14 +136,10 @@ GLuint objectIndexes[] = {0,1,2,
 int objectIndexesCount = sizeof(objectIndexes)/sizeof(GLuint);
 
 //!-----------------------------------------------------PLANTS ARRAYS
-TObject *grass = NULL;
-int grassSize = 0;
-
-TObject *flowers = NULL;
+TObject *nature = NULL;
 int flowersSize = 0;
-
-TObject *trees = NULL;
-int treesSize = 0;
+int grassSize = 0;
+int mashroomsSize = 0;
 
 TAnim animation = {0,0,0,0,0};
 
@@ -168,7 +162,7 @@ void EnableOpenGL(HWND hwnd, HDC*, HGLRC*);
 void DisableOpenGL(HWND, HDC, HGLRC);
 
 void playerMove();
-void initPlants(int grassCounterSize, int flowersCounterSize);
+void initPlants(int grassCounterSize, int flowersCounterSize, int mashroomsCounterSize);
 void creatTrees(TWood *obj, int type);
 void mapCreateHill(int posX, int posY, int radius, int heightExtremum);
 
