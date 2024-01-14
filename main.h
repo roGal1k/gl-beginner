@@ -186,10 +186,8 @@ float heart[] = {0.5, 0.25,
 int countHunger;
 
 //test
-float hungerUV[] = {0,1, 0.5,1,
-                    0.5,0.5, 0,0.5};
-GLuint hungerInd[] = {0,0, 1,0,
-                      1,1, 0,1};
+float hungerUV[] = {0,1, 0.5,1, 0.5,0.5, 0,0.5};
+float hungerInd[] = {0,0, 1,0, 1,1, 0,1};
 int hungerIndexesCount = sizeof(hungerInd)/sizeof(GLuint);
 
 //craftstation

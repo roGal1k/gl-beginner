@@ -172,7 +172,6 @@ void paintTrees(TWood wood){
 //!-----------------------------------------------------HUNGER
 void showHunger(int leftX, int topY, float scale){
 
-    /*glEnable(GL_TEXTURE_2D);
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
@@ -182,17 +181,18 @@ void showHunger(int leftX, int topY, float scale){
 
         for(int i = 0; i < MAXHUNGER; i++){
             glPushMatrix();
+                glEnable(GL_TEXTURE_2D);
                 glTranslatef(leftX + i*scale, topY, 0);
                 glScalef(scale, scale, 1);
                 glBindTexture(GL_TEXTURE_2D, texHunger);
-                glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-                //glDrawElements(GL_TRIANGLES, hungerIndexesCount, GL_UNSIGNED_INT, hungerInd);
+                //glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+                glDrawElements(GL_TRIANGLE_FAN, hungerIndexesCount, GL_UNSIGNED_INT, hungerInd);
             glPopMatrix();
         }
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-    glDisableClientState(GL_VERTEX_ARRAY);*/
+    glDisableClientState(GL_VERTEX_ARRAY);
 
-    glEnableClientState(GL_VERTEX_ARRAY);
+    /*glEnableClientState(GL_VERTEX_ARRAY);
         glVertexPointer(2, GL_FLOAT, 0, hungerInd);
         for(int i = 0; i < MAXHUNGER; i++){
             glPushMatrix();
@@ -200,10 +200,10 @@ void showHunger(int leftX, int topY, float scale){
                 glScalef(scale, scale, 1);
                 glColor3f(0.7,0.7,0.7);
                 glDisable(GL_TEXTURE_2D);
-                glDrawArrays(GL_TRIANGLE_FAN, 0, 2);
+                glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
             glPopMatrix();
         }
-    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_VERTEX_ARRAY);*/
 
 }
 
