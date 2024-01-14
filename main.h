@@ -35,10 +35,11 @@ unsigned int texTerain,
     texPoppy,
     texChamomile,
     texToadstool,
-    texBirch;
+    texBirch,
+    texHunger;
 
 //!-----------------------------------------------------STRUCTURS
-struct {
+struct{
     float vertex[24];
     GLuint index[36];
 }cube ={
@@ -49,17 +50,17 @@ struct {
          1,2,6, 6,5,1, 0,3,7, 7,4,0}
 };
 
-typedef struct {
+typedef struct{
     float x,y,z;
     int type;
     float scale;
 }TObject;
 
-typedef struct {
+typedef struct{
     float r,g,b;
 }TColor;
 
-typedef struct {
+typedef struct{
     float x,y,z;
 }TCell;
 
@@ -67,22 +68,26 @@ typedef struct{
     float u,v;
 }TUV;
 
-typedef struct {
+typedef struct{
     TObject *obj;
     int objCount;
     int type;
 }TWood;
 
-typedef struct {    //array selected object
+typedef struct{    //array selected object
     int plantsArrayIndex; // number mask in grass array
     int colorIndex;     // default object color
 }TSelectObject;
 
-typedef struct {
+typedef struct{
     TObject *obj;
     float dx,dy,dz;
     int cnt;
 } TAnim;
+
+typedef struct{
+    int type;
+}TSlot;
 
 //!-----------------------------------------------------PLANTS PRESETS
 float cubeWood[] =   {0,0,0, 1,0,0, 1,1,0, 0,1,0,
@@ -146,14 +151,55 @@ TAnim animation = {0,0,0,0,0};
 TWood *woods = NULL;
 int woodsSize = 0;
 
+//bag
+#define bagSize 9
+TSlot bag[bagSize];
+float bagRect[] = {0,0, 1,0, 1,1, 0,1};
+float bagRectUV[] = {0,0, 1,0, 1,1, 0,1};
+int selectedItem =0;
+
 TSelectObject selectArray[objectListCount];
 int selectArrayCount = 0;
+
+//screen
+POINT scrSize;
+float scrKoef;
 
 //sun
 float sun[] = {-1,-1,0,
                1,-1,0,
                1,1,0,
                -1,1,0};
+
+//health character
+#define MAXHEALTH 10
+int health;
+float heart[] = {0.5, 0.25,
+                 0.25, 0,
+                 0, 0.25,
+                 0.5, 1,
+                 1, 0.25,
+                 0.75, 0};
+
+//hunger character
+#define MAXHUNGER 10
+int countHunger;
+
+//test
+float hungerUV[] = {0,1, 0.5,1,
+                    0.5,0.5, 0,0.5};
+GLuint hungerInd[] = {0,0, 1,0,
+                      1,1, 0,1};
+int hungerIndexesCount = sizeof(hungerInd)/sizeof(GLuint);
+
+//craftstation
+#define CRAFTSIZE 9
+TSlot craftStation[CRAFTSIZE];
+
+#define EFFECTTIMERSIZE 10
+int countEffectTime = 0;
+
+
 
 //!-----------------------------------------------------MAIN METHODS
 LRESULT CALLBACK WindowProc(HWND, UINT, WPARAM, LPARAM);
@@ -162,10 +208,12 @@ void EnableOpenGL(HWND hwnd, HDC*, HGLRC*);
 void DisableOpenGL(HWND, HDC, HGLRC);
 
 void playerMove();
+void gameShow();
+void menuShow();
 void initPlants(int grassCounterSize, int flowersCounterSize, int mashroomsCounterSize);
 void creatTrees(TWood *obj, int type);
 void mapCreateHill(int posX, int posY, int radius, int heightExtremum);
-
+void windResize(int x, int y);
 float mapGetHeight(float x, float y);
 
 #endif // MAIN_H_INCLUDED

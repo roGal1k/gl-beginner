@@ -9,8 +9,7 @@ GLuint mapIndexes[mapW-1][mapH-1][6];
 int mapIndexesCount = sizeof(mapIndexes)/sizeof(GLuint);
 
 //!-----------------------------------------------------HELPERS
-float mapGetHeight(float x, float y)
-{
+float mapGetHeight(float x, float y){
     if(!isCoordInMap(x,y)) return 0;
 
     int cX = (int)x;
@@ -40,8 +39,20 @@ void AnimMove(TAnim *animation){
         animation->obj->z += animation->dz;
         animation->cnt--;
         if(animation->cnt <1){
-            animation->obj->x = rand() % mapW;
-            animation->obj->y = rand() % mapH;
+
+            int i;
+            if(bag[selectedItem].type<0) bag[selectedItem].type = animation->obj->type;
+            else {for(i=0; i<bagSize; i++)
+                if(bag[i].type<0)
+                {
+                    bag[i].type = animation->obj->type;
+                    break;
+                }
+            }
+            if(i<bagSize){
+                        animation->obj->x = rand() % mapW;
+                        animation->obj->y = rand() % mapH;
+            }
             animation->obj->z = mapGetHeight(animation->obj->x, animation->obj->y);
             animation->obj = NULL;
         }
@@ -133,6 +144,7 @@ void creatTrees(TWood *obj, int type){
 }
 
 void paintTrees(TWood wood){
+
     glEnable(GL_TEXTURE_2D);
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -153,6 +165,143 @@ void paintTrees(TWood wood){
         }
 
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    glDisableClientState(GL_VERTEX_ARRAY);
+
+}
+
+//!-----------------------------------------------------HUNGER
+void showHunger(int leftX, int topY, float scale){
+
+    /*glEnable(GL_TEXTURE_2D);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+        glVertexPointer(2, GL_FLOAT, 0, hungerInd);
+        glTexCoordPointer(2, GL_FLOAT, 0, hungerUV);
+        glColor3f(0.7,0.7,0.7);
+
+        for(int i = 0; i < MAXHUNGER; i++){
+            glPushMatrix();
+                glTranslatef(leftX + i*scale, topY, 0);
+                glScalef(scale, scale, 1);
+                glBindTexture(GL_TEXTURE_2D, texHunger);
+                glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+                //glDrawElements(GL_TRIANGLES, hungerIndexesCount, GL_UNSIGNED_INT, hungerInd);
+            glPopMatrix();
+        }
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    glDisableClientState(GL_VERTEX_ARRAY);*/
+
+    glEnableClientState(GL_VERTEX_ARRAY);
+        glVertexPointer(2, GL_FLOAT, 0, hungerInd);
+        for(int i = 0; i < MAXHUNGER; i++){
+            glPushMatrix();
+                glTranslatef(leftX + i*scale, topY, 0);
+                glScalef(scale, scale, 1);
+                glColor3f(0.7,0.7,0.7);
+                glDisable(GL_TEXTURE_2D);
+                glDrawArrays(GL_TRIANGLE_FAN, 0, 2);
+            glPopMatrix();
+        }
+    glDisableClientState(GL_VERTEX_ARRAY);
+
+}
+
+//!-----------------------------------------------------BAG
+void showBag(int leftX, int topY, float scale){
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        glVertexPointer(2, GL_FLOAT, 0, bagRect);
+        glTexCoordPointer(2, GL_FLOAT,0, bagRectUV);
+            for(int i = 0; i < bagSize; i++){
+                glPushMatrix();
+                    glEnable(GL_BLEND);
+                        glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+
+                        glTranslatef(leftX + i*scale, topY, 0);
+                        glScalef(scale, scale, 1);
+                        glColor4ub(110,95,73,160);
+                        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+                    glDisable(GL_BLEND);
+
+                    if(bag[i].type>0){
+                        glPushMatrix();
+                            glColor3f(1,1,1);
+                            glEnable(GL_TEXTURE_2D);
+                            glBindTexture(GL_TEXTURE_2D, bag[i].type);
+                            glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+                        glPopMatrix();
+                    }
+
+                    glColor3ub(160,146,116);
+                    glLineWidth(3);
+                    glDisable(GL_TEXTURE_2D);
+                    glDrawArrays(GL_LINE_LOOP, 0, 4);
+
+                glPopMatrix();
+            }
+
+            glPushMatrix();
+                glTranslatef(leftX-2 + selectedItem*scale, topY-1, 0);
+                glScalef(scale, scale, 1);
+                glColor3f(1,1,1);
+                glLineWidth(4);
+                glDisable(GL_TEXTURE_2D);
+                glDrawArrays(GL_LINE_LOOP, 0, 4);
+            glPopMatrix();
+
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+}
+
+//!-----------------------------------------------------EFFECTSTIMER
+void showEffectsTimer(int leftX, int topY, float scale){
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        glVertexPointer(2, GL_FLOAT, 0, bagRect);
+        glTexCoordPointer(2, GL_FLOAT,0, bagRectUV);
+            for(int i = 0; i < EFFECTTIMERSIZE; i++){
+                glPushMatrix();
+                    glEnable(GL_BLEND);
+                        glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+
+                        glTranslatef(leftX + i*scale, topY, 0);
+                        glScalef(scale, scale/4, 1);
+
+                        if (i<countEffectTime) glColor4ub(77, 140, 27, 140);
+                        else glColor4ub(64, 64, 55,160);
+
+                        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+                    glDisable(GL_BLEND);
+
+                    glColor3ub(43, 43, 39);
+                    glLineWidth(3);
+                    glDisable(GL_TEXTURE_2D);
+                    glDrawArrays(GL_LINE_LOOP, 0, 4);
+
+                glPopMatrix();
+            }
+
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+}
+
+//!-----------------------------------------------------HEALTH
+void showHealth(int leftX, int topY, float scale){
+    glEnableClientState(GL_VERTEX_ARRAY);
+        glVertexPointer(2, GL_FLOAT, 0, heart);
+        for(int i = 0; i < MAXHEALTH; i++){
+            glPushMatrix();
+                glTranslatef(leftX + i*scale, topY, 0);
+                glScalef(scale, scale, 1);
+                if(i<health) glColor3ub(255,0,0);
+                else glColor3ub(0,0,0);
+                glDisable(GL_TEXTURE_2D);
+                glDrawArrays(GL_TRIANGLE_FAN, 0, 6);
+            glPopMatrix();
+        }
     glDisableClientState(GL_VERTEX_ARRAY);
 }
 
@@ -195,13 +344,11 @@ void CalcNormals(TCell a, TCell b, TCell c, TCell *n){
 }
 
 //!-----------------------------------------------------MANIPULATOR
-void gameMove()
-{
+void gameMove(){
     playerMove();
 }
 
-void playerMove()
-{
+void playerMove(){
     if (GetForegroundWindow() != hwnd) return;
 
     float angle = -camera.zRot /180 * M_PI;
@@ -225,11 +372,12 @@ void playerMove()
     cameraAutoMoveByMouse(400, 300, speedCam);
 }
 
-void playerTaking(HWND hwnd)
-{
+void playerTaking(HWND hwnd){
     selectMode = TRUE;
     gameShow();
     selectMode = FALSE;
+
+    if(bag[selectedItem].type!=-1 && health != MAXHEALTH){bag[selectedItem].type = -1; health++; gameShow(); return;}
 
     RECT rct;
     GLubyte color[3];
@@ -249,8 +397,7 @@ void playerTaking(HWND hwnd)
 }
 
 //!-----------------------------------------------------MAP
-void initMap()
-{
+void initMap(){
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
     glEnable(GL_COLOR_MATERIAL);
@@ -260,12 +407,21 @@ void initMap()
     glEnable(GL_ALPHA_TEST);
     glAlphaFunc(GL_GREATER,0.5);
 
+    health = 8;
+    countHunger = 8;
+
+    for(int i = 0; i < bagSize; i++){
+        bag[i].type = -1;
+    }
+
     loadTexture("textures/poppy.png", &texPoppy);
     loadTexture("textures/chamomile.png", &texChamomile);
     loadTexture("textures/toadstool.png", &texToadstool);
     loadTexture("textures/pole.png", &texTerain);
     loadTexture("textures/grass.png", &texGrass);
     loadTexture("textures/birch.png", &texBirch);
+    loadTexture("textures/hunger_icons.png",&texHunger);
+
 
     for (int i=0; i<mapW; i++){
         int pos = i*mapH;
@@ -414,9 +570,29 @@ void paintPlants(TObject *obj, int size){
     glDisableClientState(GL_VERTEX_ARRAY);
 }
 
+//!-----------------------------------------------------GAMEMENU
+void menuShow(){
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(0,scrSize.x, scrSize.y, 0, -1, 1);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    glDisable(GL_LIGHTING);
+    glDisable(GL_DEPTH_TEST);
+
+    float itemSize = (scrSize.x/2)/bagSize;
+    float heartSize = itemSize/3;
+    float timercountSize = (itemSize*bagSize)/EFFECTTIMERSIZE;
+
+    showBag(scrSize.x/4, scrSize.y -itemSize -10, itemSize);
+    showEffectsTimer(scrSize.x/4, scrSize.y -itemSize -10 -timercountSize/4 -5, timercountSize);
+    showHealth(scrSize.x/4, scrSize.y -itemSize -10 -timercountSize/4 -5 -heartSize -5, heartSize);
+    showHunger(scrSize.x/4 + itemSize*bagSize - heartSize*MAXHUNGER, scrSize.y -itemSize -10 -timercountSize/4 -5 -heartSize -5, heartSize);
+}
+
 //!-----------------------------------------------------GAME
-void initGame()
-{
+void initGame(){
     glEnable(GL_DEPTH_TEST);
     initMap();
     RECT rct;
@@ -424,8 +600,16 @@ void initGame()
     windResize(rct.right, rct.bottom);
 }
 
-void gameShow()
-{
+void gameShow(){
+    float sz = 0.1;
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glFrustum(-scrKoef*sz, scrKoef*sz, -sz, sz, sz*2, 1000);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    glEnable(GL_DEPTH_TEST);
+
     static float alfa = 0;
     alfa += 0.125;
     if(alfa > 180) alfa -= 360;
@@ -524,6 +708,14 @@ void gameShow()
     glPopMatrix();
 }
 
+//!-----------------------------------------------------WNDSETTINGS
+void windResize(int x, int y){
+    glViewport(0, 0, x, y);
+    scrSize.x = x;
+    scrSize.y = y;
+    scrKoef  = x / (float) y;
+};
+
 //!-----------------------------------------------------MAIN
 int WINAPI WinMain(HINSTANCE hInstance,
                    HINSTANCE hPrevInstance,
@@ -596,6 +788,7 @@ int WINAPI WinMain(HINSTANCE hInstance,
         {
             /* OpenGL animation code goes here */
             gameShow();
+            menuShow();
             SwapBuffers(hDC);
             Sleep (1);
         }
@@ -629,6 +822,17 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         case WM_LBUTTONDOWN:
             playerTaking(hwnd);
+        break;
+
+        case WM_MOUSEWHEEL:
+            if (GET_WHEEL_DELTA_WPARAM(wParam)>0){
+                if (selectedItem<bagSize-1)selectedItem++;
+                else selectedItem=0;
+            }
+            else{
+                if (selectedItem>0)selectedItem--;
+                else selectedItem=bagSize-1;
+            }
         break;
 
         case WM_SETCURSOR:

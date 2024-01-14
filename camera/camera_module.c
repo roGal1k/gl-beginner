@@ -24,15 +24,3 @@ void cameraAutoMoveByMouse(int midleX, int midleY, float speed){
     cameraRotation((base.y - mouseCur.y) * speed, (base.x - mouseCur.x) * speed);
     SetCursorPos(base.x, base.y);
 }
-
-void windResize(int x, int y){
-    glViewport(0, 0, x, y);
-    float k = x / (float)y;
-    float sz = 0.1;
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glFrustum(-k*sz, k*sz, -sz, sz, sz*2, 1000);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-};
