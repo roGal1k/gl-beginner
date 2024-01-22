@@ -31,25 +31,15 @@ BOOL isCoordInMap(float x, float y)
 
 //!-----------------------------------------------------TEXTURE INDEXES
 unsigned int texTerain,
-    texGrass,
-    texPoppy,
-    texChamomile,
-    texToadstool,
-    texBirch,
-    texHunger;
+             texGrass,
+             texPoppy,
+             texChamomile,
+             texToadstool,
+             texBirch,
+             texHunger,
+             texEffectSpeed;
 
 //!-----------------------------------------------------STRUCTURS
-struct{
-    float vertex[24];
-    GLuint index[36];
-}cube ={
-        {0,0,0, 0,1,0, 1,1,0, 1,0,0,
-         0,0,1, 0,1,1, 1,1,1, 1,0,1},
-        {0,1,2, 2,3,0, 4,5,6, 6,7,4,
-         3,2,5, 6,7,3, 0,1,5, 5,4,0,
-         1,2,6, 6,5,1, 0,3,7, 7,4,0}
-};
-
 typedef struct{
     float x,y,z;
     int type;
@@ -74,9 +64,9 @@ typedef struct{
     int type;
 }TWood;
 
-typedef struct{    //array selected object
-    int plantsArrayIndex; // number mask in grass array
-    int colorIndex;     // default object color
+typedef struct{             //array selected object
+    int plantsArrayIndex;   // number mask in grass array
+    int colorIndex;         // default object color
 }TSelectObject;
 
 typedef struct{
@@ -87,7 +77,32 @@ typedef struct{
 
 typedef struct{
     int type;
+    int leftX;
+    int topY;
+    float scaleX;
+    float scaleY;
+    BOOL isActive;
 }TSlot;
+
+typedef struct{
+    int time;
+    int timeMax;
+}TBuff;
+
+struct{
+    float vertex[24];
+    GLuint index[36];
+}cube ={
+        {0,0,0, 0,1,0, 1,1,0, 1,0,0,
+         0,0,1, 0,1,1, 1,1,1, 1,0,1},
+        {0,1,2, 2,3,0, 4,5,6, 6,7,4,
+         3,2,5, 6,7,3, 0,1,5, 5,4,0,
+         1,2,6, 6,5,1, 0,3,7, 7,4,0}
+};
+
+struct {
+    TBuff speed;
+} buffs = {0,0};
 
 //!-----------------------------------------------------PLANTS PRESETS
 float cubeWood[] =   {0,0,0, 1,0,0, 1,1,0, 0,1,0,
@@ -158,6 +173,10 @@ float bagRect[] = {0,0, 1,0, 1,1, 0,1};
 float bagRectUV[] = {0,0, 1,0, 1,1, 0,1};
 int selectedItem =0;
 
+BOOL characterIsMove;
+BOOL isJump = FALSE;
+BOOL isDown = FALSE;
+
 TSelectObject selectArray[objectListCount];
 int selectArrayCount = 0;
 
@@ -167,13 +186,13 @@ float scrKoef;
 
 //sun
 float sun[] = {-1,-1,0,
-               1,-1,0,
-               1,1,0,
-               -1,1,0};
+                1,-1,0,
+                1, 1,0,
+               -1, 1,0};
 
 //health character
 #define MAXHEALTH 10
-int health;
+int countHealth;
 float heart[] = {0.5, 0.25,
                  0.25, 0,
                  0, 0.25,
@@ -183,11 +202,25 @@ float heart[] = {0.5, 0.25,
 
 //hunger character
 #define MAXHUNGER 10
-int countHunger;
+float countHunger;
 
 //test
-float hungerUV[] = {0,1, 0.5,1, 0.5,0.5, 0,0.5};
+float hungerEmptyUV[] = {0.5,0.5,
+                        0.5,0,
+                        0,0,
+                        0,0.5};
+float hungerHalfUV[] = {1,1,
+                        1,0.5,
+                        0.5,0.5,
+                        0.5,1};
+float hungerFuelyUV[] = {0.5,1,
+                        0.5,0.5,
+                        0,0.5,
+                        0,1};
 float hungerInd[] = {0,0, 1,0, 1,1, 0,1};
+
+
+
 int hungerIndexesCount = sizeof(hungerInd)/sizeof(GLuint);
 
 //craftstation
